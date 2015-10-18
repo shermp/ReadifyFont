@@ -1,14 +1,7 @@
 ﻿# This script should be called using '$ fontforge -script ReadifyFontCLI.py [OPTIONS] FONTNAME'
 #
 # Readify Font by Sherman Perry
-# 
-# Originaly distributed on Mobileread forums
 #
-# Feel free to modify and redistribute this script
-# Please consider sending me modifications or an improved script at mobileread.com
-# My mobileread username is 'sherman'
-#
-# Current Version: Readify Font 0.1
 # It has plenty of rough edges...
 
 import os
@@ -98,7 +91,7 @@ parser.add_argument('-b', '--bold' , help='bold font file')
 parser.add_argument('-B', '--bolditalic' , help='Bold Italic font file')
 parser.add_argument('-s', '--striphint' , help='Strip hints from font', action="store_true")
 parser.add_argument('-k', '--legacykern' , help='Include legacy kerning table', action="store_true")
-parser.add_argument('-d', '--outputdirectory' , help='Output directory if set. Default is "./kobomodified/"')
+parser.add_argument('-d', '--outputdirectory' , help='Output directory if set. Default is "./readified/"')
 parser.add_argument('-w', '--addweight' , help='Add weight to font. Values around 8-15 seems suitable. 50 is bold', type=int)
 parser.add_argument('-p', '--panosestrip' , help='Strip PANOSE data from font', action="store_true")
 parser.add_argument('-m', '--modifybearings' , help='Modify bearings when adding weight. This has no affect when not adding weight. \
@@ -118,7 +111,7 @@ userSuppliedPath = args.outputdirectory
 if userSuppliedPath:
     outDir = userSuppliedPath.strip() + '/'
 else:
-    outDir = './koboified/'
+    outDir = './readified/'
 
 outDir = os.path.normpath(outDir)
 print(outDir)
