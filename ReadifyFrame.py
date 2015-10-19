@@ -77,25 +77,30 @@ class ReadifyFrame ( wx.Frame ):
 
         # Options #
         contOptions = wx.BoxSizer( wx.HORIZONTAL )
-        
+        """
         self.chkHint = wx.CheckBox( self, wx.ID_ANY, u"Remove Hinting", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkHint.SetToolTipString("Strip hinting information from the generated TrueType font")
-        contOptions.Add( self.chkHint, 1, wx.ALL, 5 )
-
+        contOptions.Add( self.chkHint, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+        """
         self.chkKern = wx.CheckBox( self, wx.ID_ANY, u"Legacy Kerning", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkKern.SetToolTipString("Some readers and software require 'legacy', or 'old style' kerning to be "
                                       "present for kerning to work.")
-        contOptions.Add( self.chkKern, 1, wx.ALL, 5 )
+        contOptions.Add( self.chkKern, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         
         self.chkPANOSE = wx.CheckBox( self, wx.ID_ANY, u"Remove PANOSE", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkPANOSE.SetToolTipString("Kobo readers can get confused by PANOSE settings. This option sets all "
                                         "PANOSE information to 0, or 'any'")
-        contOptions.Add( self.chkPANOSE, 1, wx.ALL, 5 )
+        contOptions.Add( self.chkPANOSE, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         
         self.chkAltName = wx.CheckBox( self, wx.ID_ANY, u"Alt. Name", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkAltName.SetToolTipString("Some fonts have issues with renaming. If the generated font does not have "
                                          "the same internal font name as you entered, try enabling this option.")
-        contOptions.Add( self.chkAltName, 0, wx.ALL, 5 )
+        contOptions.Add( self.chkAltName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+        rboxHintsChoices = [ u"Keep Existing", u"Remove Existing", u"Autohint" ]
+        self.rboxHints = wx.RadioBox( self, wx.ID_ANY, u"Hints", wx.DefaultPosition, wx.DefaultSize, rboxHintsChoices, 1, wx.RA_SPECIFY_ROWS )
+        self.rboxHints.SetSelection( 0 )
+        contOptions.Add( self.rboxHints, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         
         parentCont.Add( contOptions, 0, wx.EXPAND, 5 )
 

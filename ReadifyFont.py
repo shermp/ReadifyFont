@@ -90,8 +90,17 @@ class ReadifyFontGUI(ReadifyFrame):
             return MISSING_VALUE
 
         # Add more options to the dictionary
+        """
         if self.chkHint.GetValue():
             optsDic["striphint"] = "-s"
+        """
+        if self.rboxHints.GetSelection() == 0:
+            optsDic["changehint"] = "-c keep"
+        elif self.rboxHints.GetSelection() == 1:
+            optsDic["changehint"] = "-c remove"
+        elif self.rboxHints.GetSelection() == 2:
+            optsDic["changehint"] = "-c auto"
+
         if self.chkKern.GetValue():
             optsDic["legacykern"] = "-k"
         if self.chkPANOSE.GetValue():
@@ -172,9 +181,10 @@ class ReadifyFontGUI(ReadifyFrame):
         self.txtFontFamName.SetValue(wx.EmptyString)
         self.chkAltName.SetValue(False)
         self.chkBearing.SetValue(False)
-        self.chkHint.SetValue(False)
+        #self.chkHint.SetValue(False)
         self.chkKern.SetValue(False)
         self.chkPANOSE.SetValue(False)
+        self.rboxHints.SetSelection(0)
         self.pickerOutDir.SetPath(wx.EmptyString)
         self.txtDarkenAmount.SetValue(wx.EmptyString)
         self.txtOutput.SetValue(wx.EmptyString)

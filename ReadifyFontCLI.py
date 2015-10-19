@@ -13,6 +13,8 @@ FNT_REGULAR = 'Regular'
 FNT_ITALIC = 'Italic'
 FNT_BOLD = 'Bold'
 FNT_BOLD_ITALIC = 'BoldItalic'
+OPT_CHANGE_HINT = ('keep', 'auto', 'remove')
+
 
 def changeWeight(glyph, emboldenAmount, modifyBearings):
     origWidth = glyph.width
@@ -53,13 +55,13 @@ def modLayer(glyph):
     # Assign the modified layer object back to the glyph
     glyph.layers[glyph.activeLayer] = lay
     glyph.correctDirection()
-    
+
 def generateFlags(stripHints, legacyKern):
-    if stripHints and legacyKern:
+    if stripHints == 'remove' and legacyKern:
         flags = ('opentype', 'old-kern', 'round', 'no-hints')
-    elif stripHints and not legacyKern:
+    elif stripHints == 'remove' and not legacyKern:
         flags = ('opentype', 'round', 'no-hints')
-    elif legacyKern and not stripHints:
+    elif legacyKern and stripHints == 'keep':
         flags = ('opentype', 'old-kern', 'round')
     else:
         flags = ('opentype', 'round')
@@ -89,7 +91,8 @@ parser.add_argument('-r', '--regular', help='Regular font file')
 parser.add_argument('-i', '--italic' , help='Italic font file')
 parser.add_argument('-b', '--bold' , help='bold font file')
 parser.add_argument('-B', '--bolditalic' , help='Bold Italic font file')
-parser.add_argument('-s', '--striphint' , help='Strip hints from font', action="store_true")
+parser.add_argument('-c', '--changehint' , help='Choose whether to keep hints, remove hints, or enable autohinting.\n'
+                    'allowed arguments are "keep", "remove", "auto". Keep is the default.', type=str)
 parser.add_argument('-k', '--legacykern' , help='Include legacy kerning table', action="store_true")
 parser.add_argument('-d', '--outputdirectory' , help='Output directory if set. Default is "./readified/"')
 parser.add_argument('-w', '--addweight' , help='Add weight to font. Values around 8-15 seems suitable. 50 is bold', type=int)
@@ -122,7 +125,17 @@ except OSError:
         raise
 
 newFamilyName = args.fontname.strip()
-stripHints = args.striphint
+changeHints = args.changehint
+
+if not changeHints:
+    changeHints = 'keep'
+else:
+    changeHints = changeHints.strip()
+    changeHints = changeHints.lower()
+    if changeHints not in OPT_CHANGE_HINT:
+        changeHints = 'keep'
+        print('You did not specify a correct hint argument. Current hints will be preserved.')
+
 legacyKern = args.legacykern
 addWeight = args.addweight
 
@@ -155,6 +168,9 @@ for style, fontFile in fontDic.iteritems():
                 changeWeight(glyph, addWeight, args.modifybearings)
             # Make some modifications to better suit truetype outlines
             modLayer(glyph)
+            # Autohint glyph
+            if changeHints == 'auto':
+                glyph.autoHint()
         
         # If I've understood things correctly, this should be the same as setting the curves in the
         # font information screen of the GUI
@@ -166,7 +182,7 @@ for style, fontFile in fontDic.iteritems():
         
         print('\nSaving '+newFontTTF+'. . .\n')
 
-        flagsTTF = generateFlags(stripHints, legacyKern)
+        flagsTTF = generateFlags(changeHints, legacyKern)
         f.generate(newFontTTF, flags=flagsTTF)
         
         f.save(newFontFile)
