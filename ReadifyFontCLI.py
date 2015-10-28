@@ -111,115 +111,122 @@ def setNames(font, family, subfamily):
         font.appendSFNTName("English (US)", "SubFamily", unicode(subfamily, "utf-8"))
         font.appendSFNTName("English (US)", "Fullname", unicode(fullName, "utf-8"))
 
-parser = argparse.ArgumentParser()
-parser.add_argument("fontname", help="Specify new font name")
-parser.add_argument("-r", "--regular", help="Regular font file")
-parser.add_argument("-i", "--italic" , help="Italic font file")
-parser.add_argument("-b", "--bold" , help="bold font file")
-parser.add_argument("-B", "--bolditalic" , help="Bold Italic font file")
-parser.add_argument("-c", "--changehint" , help="Choose whether to keep hints, remove hints, or enable autohinting.\n"
-                    "allowed arguments are \"keep\", \"remove\", \"auto\". Keep is the default.", type=str)
-parser.add_argument("-k", "--legacykern" , help="Include legacy kerning table", action="store_true")
-parser.add_argument("-d", "--outputdirectory" , help="Output directory if set. Default is \"./readified/\"")
-parser.add_argument("-w", "--addweight" , help="Add weight to font. Values around 8-15 seems suitable. 50 is bold", type=int)
-parser.add_argument("-p", "--panosestrip" , help="Strip PANOSE data from font", action="store_true")
-parser.add_argument("-m", "--modifybearings" , help="Modify bearings when adding weight. This has no affect when not adding weight. \
-                    Only use it for subtle weight changes", action="store_true")
-parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
-                    try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
-args = parser.parse_args()
 
-if not any((args.regular, args.italic, args.bold, args.bolditalic)):
-    raw_input("At least one font must be specified. Press ENTER to exit...")
-    sys.exit()
+def main():
+    """
+    The main function of the script that modifies fonts according to user options
+    :return:
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fontname", help="Specify new font name")
+    parser.add_argument("-r", "--regular", help="Regular font file")
+    parser.add_argument("-i", "--italic" , help="Italic font file")
+    parser.add_argument("-b", "--bold" , help="bold font file")
+    parser.add_argument("-B", "--bolditalic" , help="Bold Italic font file")
+    parser.add_argument("-c", "--changehint" , help="Choose whether to keep hints, remove hints, or enable autohinting.\n"
+                        "allowed arguments are \"keep\", \"remove\", \"auto\". Keep is the default.", type=str)
+    parser.add_argument("-k", "--legacykern" , help="Include legacy kerning table", action="store_true")
+    parser.add_argument("-d", "--outputdirectory" , help="Output directory if set. Default is \"./readified/\"")
+    parser.add_argument("-w", "--addweight" , help="Add weight to font. Values around 8-15 seems suitable. 50 is bold", type=int)
+    parser.add_argument("-p", "--panosestrip" , help="Strip PANOSE data from font", action="store_true")
+    parser.add_argument("-m", "--modifybearings" , help="Modify bearings when adding weight. This has no affect when not adding weight. \
+                        Only use it for subtle weight changes", action="store_true")
+    parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
+                        try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
+    args = parser.parse_args()
 
-fontDic = {FNT_REGULAR : args.regular, FNT_ITALIC : args.italic, FNT_BOLD : args.bold, FNT_BOLD_ITALIC : args.bolditalic}
+    if not any((args.regular, args.italic, args.bold, args.bolditalic)):
+        raw_input("At least one font must be specified. Press ENTER to exit...")
+        sys.exit()
 
-userSuppliedPath = args.outputdirectory
+    fontDic = {FNT_REGULAR : args.regular, FNT_ITALIC : args.italic, FNT_BOLD : args.bold, FNT_BOLD_ITALIC : args.bolditalic}
 
-if userSuppliedPath:
-    outDir = userSuppliedPath.strip() + "/"
-else:
-    outDir = "./readified/"
+    userSuppliedPath = args.outputdirectory
 
-outDir = os.path.normpath(outDir)
-print(outDir)
-try: 
-    os.makedirs(outDir)
-except OSError:
-    if not os.path.isdir(outDir):
-        raise
+    if userSuppliedPath:
+        outDir = userSuppliedPath.strip() + "/"
+    else:
+        outDir = "./readified/"
 
-newFamilyName = args.fontname.strip()
-changeHints = args.changehint
+    outDir = os.path.normpath(outDir)
+    print(outDir)
+    try:
+        os.makedirs(outDir)
+    except OSError:
+        if not os.path.isdir(outDir):
+            raise
 
-if not changeHints:
-    changeHints = "keep"
-else:
-    changeHints = changeHints.strip()
-    changeHints = changeHints.lower()
-    if changeHints not in OPT_CHANGE_HINT:
+    newFamilyName = args.fontname.strip()
+    changeHints = args.changehint
+
+    if not changeHints:
         changeHints = "keep"
-        print("You did not specify a correct hint argument. Current hints will be preserved.")
+    else:
+        changeHints = changeHints.strip()
+        changeHints = changeHints.lower()
+        if changeHints not in OPT_CHANGE_HINT:
+            changeHints = "keep"
+            print("You did not specify a correct hint argument. Current hints will be preserved.")
 
-legacyKern = args.legacykern
-addWeight = args.addweight
+    legacyKern = args.legacykern
+    addWeight = args.addweight
 
+    for style, fontFile in fontDic.iteritems():
+        # Check if a font has been added before proceeding
+        if fontFile:
+            # Open font file and immediately save as a fontforge file
+            f = fontforge.open(fontFile.strip())
+            newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
+            newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
 
-for style, fontFile in fontDic.iteritems():
-    # Check if a font has been added before proceeding
-    if fontFile:
-        # Open font file and immediately save as a fontforge file
-        f = fontforge.open(fontFile.strip())
-        newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
-        newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
-        
-        f.save(newFontFile)
-        f.close()
-        
-        # Open new fontforge file
-        f = fontforge.open(newFontFile)
-        
-        # Set the font names in the SFNT names table
-        setNames(f, newFamilyName, style)
-        
-        # Replace PANOSE Data with "Any", or 0
-        if args.panosestrip:
-            f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
-                
-        # Iterate over all glyphs in font, and darken regular and italic fonts only
-        allGlyphs=f.glyphs()
-        for glyph in allGlyphs:
-            if style in (FNT_REGULAR, FNT_ITALIC) and addWeight:
-                changeWeight(glyph, addWeight, args.modifybearings)
-            # Make some modifications to better suit truetype outlines
-            modLayer(glyph)
-            # Autohint glyph
-            if changeHints == "auto":
-                glyph.autoHint()
-        
-        # If I"ve understood things correctly, this should be the same as setting the curves in the
-        # font information screen of the GUI
-        for l in range(0, f.layer_cnt):
-            if not f.layers[l].is_quadratic:
-                f.layers[l].is_quadratic = True
-                print("The curves in the "+f.layers[l].name+" layer were converted to be quadratic")
-        
-        
-        print("\nSaving "+newFontTTF+". . .\n")
-
-        flagsTTF = generateFlags(changeHints, legacyKern)
-        f.generate(newFontTTF, flags=flagsTTF)
-        
-        f.save(newFontFile)
-        f.close()
-        """ 
-        This is an ugly workaround to the font renaming issue some fonts seem to have
-        One day, I hope to find a proper fix, or a more elegent workaround
-        """
-        if args.namehack:
-            f = fontforge.open(newFontTTF)
-            setNames(f, newFamilyName, style)
-            f.generate(newFontTTF, flags=flagsTTF)
+            f.save(newFontFile)
             f.close()
 
+            # Open new fontforge file
+            f = fontforge.open(newFontFile)
+
+            # Set the font names in the SFNT names table
+            setNames(f, newFamilyName, style)
+
+            # Replace PANOSE Data with "Any", or 0
+            if args.panosestrip:
+                f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
+
+            # Iterate over all glyphs in font, and darken regular and italic fonts only
+            allGlyphs=f.glyphs()
+            for glyph in allGlyphs:
+                if style in (FNT_REGULAR, FNT_ITALIC) and addWeight:
+                    changeWeight(glyph, addWeight, args.modifybearings)
+                # Make some modifications to better suit truetype outlines
+                modLayer(glyph)
+                # Autohint glyph
+                if changeHints == "auto":
+                    glyph.autoHint()
+
+            # If I"ve understood things correctly, this should be the same as setting the curves in the
+            # font information screen of the GUI
+            for l in range(0, f.layer_cnt):
+                if not f.layers[l].is_quadratic:
+                    f.layers[l].is_quadratic = True
+                    print("The curves in the "+f.layers[l].name+" layer were converted to be quadratic")
+
+
+            print("\nSaving "+newFontTTF+". . .\n")
+
+            flagsTTF = generateFlags(changeHints, legacyKern)
+            f.generate(newFontTTF, flags=flagsTTF)
+
+            f.save(newFontFile)
+            f.close()
+            """
+            This is an ugly workaround to the font renaming issue some fonts seem to have
+            One day, I hope to find a proper fix, or a more elegent workaround
+            """
+            if args.namehack:
+                f = fontforge.open(newFontTTF)
+                setNames(f, newFamilyName, style)
+                f.generate(newFontTTF, flags=flagsTTF)
+                f.close()
+
+if __name__ == "__main__":
+    main()
