@@ -111,6 +111,60 @@ def setNames(font, family, subfamily):
         font.appendSFNTName("English (US)", "SubFamily", unicode(subfamily, "utf-8"))
         font.appendSFNTName("English (US)", "Fullname", unicode(fullName, "utf-8"))
 
+def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
+            nameHack):
+    # Open font file and immediately save as a fontforge file
+    f = fontforge.open(fontFile.strip())
+    newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
+    newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
+
+    f.save(newFontFile)
+    f.close()
+
+    # Open new fontforge file
+    f = fontforge.open(newFontFile)
+
+    # Set the font names in the SFNT names table
+    setNames(f, newFamilyName, style)
+
+    # Replace PANOSE Data with "Any", or 0
+    if stripPanose:
+        f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
+
+    # Iterate over all glyphs in font, and darken regular and italic fonts only
+    allGlyphs=f.glyphs()
+    for glyph in allGlyphs:
+        if style in (FNT_REGULAR, FNT_ITALIC) and addWeight:
+            changeWeight(glyph, addWeight, modBearings)
+        # Make some modifications to better suit truetype outlines
+        modLayer(glyph)
+        # Autohint glyph
+        if changeHints == "auto":
+            glyph.autoHint()
+
+    # If I"ve understood things correctly, this should be the same as setting the curves in the
+    # font information screen of the GUI
+    for l in range(0, f.layer_cnt):
+        if not f.layers[l].is_quadratic:
+            f.layers[l].is_quadratic = True
+            print("The curves in the "+f.layers[l].name+" layer were converted to be quadratic")
+
+    print("\nSaving "+newFontTTF+". . .\n")
+
+    flagsTTF = generateFlags(changeHints, legacyKern)
+    f.generate(newFontTTF, flags=flagsTTF)
+
+    f.save(newFontFile)
+    f.close()
+    """
+    This is an ugly workaround to the font renaming issue some fonts seem to have
+    One day, I hope to find a proper fix, or a more elegent workaround
+    """
+    if nameHack:
+        f = fontforge.open(newFontTTF)
+        setNames(f, newFamilyName, style)
+        f.generate(newFontTTF, flags=flagsTTF)
+        f.close()
 
 def main():
     """
@@ -133,6 +187,13 @@ def main():
                         Only use it for subtle weight changes", action="store_true")
     parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
                         try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
+    parser.add_argument("--previewfont", help="If specified, a preview font file will be generated in the directory "
+                                              "set by \"--previewdirectory\".\nAt least one of regular or italic font "
+                                              "files should be added. The default preview order is \"regular\", "
+                                              "\"italic\"", action="store_true")
+    parser.add_argument("--previewdirectory", help="The directory to store the preview font. If this is omitted, "
+                                                   "no preview will be generated.")
+
     args = parser.parse_args()
 
     if not any((args.regular, args.italic, args.bold, args.bolditalic)):
@@ -174,59 +235,8 @@ def main():
     for style, fontFile in fontDic.iteritems():
         # Check if a font has been added before proceeding
         if fontFile:
-            # Open font file and immediately save as a fontforge file
-            f = fontforge.open(fontFile.strip())
-            newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
-            newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
-
-            f.save(newFontFile)
-            f.close()
-
-            # Open new fontforge file
-            f = fontforge.open(newFontFile)
-
-            # Set the font names in the SFNT names table
-            setNames(f, newFamilyName, style)
-
-            # Replace PANOSE Data with "Any", or 0
-            if args.panosestrip:
-                f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
-
-            # Iterate over all glyphs in font, and darken regular and italic fonts only
-            allGlyphs=f.glyphs()
-            for glyph in allGlyphs:
-                if style in (FNT_REGULAR, FNT_ITALIC) and addWeight:
-                    changeWeight(glyph, addWeight, args.modifybearings)
-                # Make some modifications to better suit truetype outlines
-                modLayer(glyph)
-                # Autohint glyph
-                if changeHints == "auto":
-                    glyph.autoHint()
-
-            # If I"ve understood things correctly, this should be the same as setting the curves in the
-            # font information screen of the GUI
-            for l in range(0, f.layer_cnt):
-                if not f.layers[l].is_quadratic:
-                    f.layers[l].is_quadratic = True
-                    print("The curves in the "+f.layers[l].name+" layer were converted to be quadratic")
-
-
-            print("\nSaving "+newFontTTF+". . .\n")
-
-            flagsTTF = generateFlags(changeHints, legacyKern)
-            f.generate(newFontTTF, flags=flagsTTF)
-
-            f.save(newFontFile)
-            f.close()
-            """
-            This is an ugly workaround to the font renaming issue some fonts seem to have
-            One day, I hope to find a proper fix, or a more elegent workaround
-            """
-            if args.namehack:
-                f = fontforge.open(newFontTTF)
-                setNames(f, newFamilyName, style)
-                f.generate(newFontTTF, flags=flagsTTF)
-                f.close()
+            modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
+                    args.modifybearings, args.namehack)
 
 if __name__ == "__main__":
     main()
