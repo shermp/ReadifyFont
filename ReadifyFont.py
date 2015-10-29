@@ -31,7 +31,7 @@ class ReadifyFontGUI(ReadifyFrame):
         :param event:
         :return:
         """
-        dialog = wx.FileDialog(self, "Choose a file", "", "", "*.otf", wx.MULTIPLE)
+        dialog = wx.FileDialog(self, "Choose a file", "", "", "Font Files (*.ttf, *.otf)|*.ttf;*.otf", wx.MULTIPLE)
         if dialog.ShowModal() == wx.ID_OK:
             fileList = dialog.GetFilenames()
             self.fontDir = os.path.dirname(dialog.GetPath())
