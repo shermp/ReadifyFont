@@ -111,14 +111,24 @@ def setNames(font, family, subfamily):
         font.appendSFNTName("English (US)", "SubFamily", unicode(subfamily, "utf-8"))
         font.appendSFNTName("English (US)", "Fullname", unicode(fullName, "utf-8"))
 
+
 def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
-            nameHack):
+            nameHack, preview):
     # Open font file and immediately save as a fontforge file
     f = fontforge.open(fontFile.strip())
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
+    if preview:
+        f.selection.select(("ranges",None),"A","z")
+        f.copy()
 
-    f.save(newFontFile)
+        n = fontforge.font()
+        n.selection.select(("ranges",None),"A","z")
+        n.paste()
+        n.fontname="preview"
+        n.save(newFontFile)
+    else:
+        f.save(newFontFile)
     f.close()
 
     # Open new fontforge file
@@ -232,11 +242,24 @@ def main():
     legacyKern = args.legacykern
     addWeight = args.addweight
 
-    for style, fontFile in fontDic.iteritems():
-        # Check if a font has been added before proceeding
-        if fontFile:
-            modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
-                    args.modifybearings, args.namehack)
+    if args.previewfont and args.previewdirectory and (fontDic[FNT_REGULAR] or fontDic[FNT_ITALIC]):
+        prevOutDir = args.previewdirectory
+        prevFamilyName = "preview"
+        if fontDic[FNT_REGULAR]:
+            prevFontFile = fontDic[FNT_REGULAR]
+            prevStyle = FNT_REGULAR
+        else:
+            prevFontFile = fontDic[FNT_ITALIC]
+            prevStyle = FNT_ITALIC
+
+        modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
+                args.panosestrip, args.modifybearings, args.namehack, True)
+    else:
+        for style, fontFile in fontDic.iteritems():
+            # Check if a font has been added before proceeding
+            if fontFile:
+                modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
+                        args.modifybearings, args.namehack, False)
 
 if __name__ == "__main__":
     main()
