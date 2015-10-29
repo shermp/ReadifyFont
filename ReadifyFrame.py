@@ -164,14 +164,17 @@ class ReadifyFrame ( wx.Frame ):
         self.btnGenTTF = wx.Button( self, wx.ID_ANY, u"Generate TTF", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnGenTTF.SetToolTipString("Generates a new set of font files using the information entered above.")
         contGenerate.Add( self.btnGenTTF, 0, wx.ALL, 5 )
+
+        self.btnPrevFont = wx.Button( self, wx.ID_ANY, u"Preview Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnPrevFont.SetToolTipString("Preview the changes using a small subset of the font.")
+        contGenerate.Add( self.btnPrevFont, 0, wx.ALL, 5 )
+
         self.btnClear = wx.Button( self, wx.ID_ANY, u"Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnClear.SetToolTipString("Clear all fields in the form.")
         contGenerate.Add( self.btnClear, 0, wx.ALL, 5 )
-        
-        
+
         parentCont.Add( contGenerate, 0, wx.CENTER|wx.BOTTOM, 5 )
-        
-        
+
         self.SetSizer( parentCont )
         self.Layout()
         
@@ -180,17 +183,20 @@ class ReadifyFrame ( wx.Frame ):
         # Connect Events
         self.btnChooseFont.Bind( wx.EVT_BUTTON, self.chooseFiles )
         self.btnGenTTF.Bind( wx.EVT_BUTTON, self.genTTF )
+        self.btnPrevFont.Bind(wx.EVT_BUTTON, self.previewFont )
         self.btnClear.Bind( wx.EVT_BUTTON, self.clearForm )
     
     def __del__( self ):
         pass
-    
-    
+
     # Virtual event handlers, overide them in your derived class
     def chooseFiles( self, event ):
         event.Skip()
     
     def genTTF( self, event ):
+        event.Skip()
+
+    def previewFont(self, event ):
         event.Skip()
     
     def clearForm( self, event ):
