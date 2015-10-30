@@ -114,10 +114,6 @@ class ReadifyFontGUI(ReadifyFrame):
             return None
 
         # Add more options to the dictionary
-        """
-        if self.chkHint.GetValue():
-            optsDic["striphint"] = "-s"
-        """
         if self.rboxHints.GetSelection() == 0:
             optsDic["changehint"] = "-c keep"
         elif self.rboxHints.GetSelection() == 1:
@@ -187,52 +183,49 @@ class ReadifyFontGUI(ReadifyFrame):
     Here, I can use CSS to load the font file for viewing.
     """
     def previewFont(self, event ):
-        try:
-            previewDir = tempfile.mkdtemp()
-            opts = self.genOptionsList(True, previewDir)
-            if opts:
-                cliRetCode, cliOutput = self.runCLI(opts)
-                strCliOutput = cliOutput.decode(sys.stdout.encoding)
-                # Check for success
-                if cliRetCode == PROC_OS_ERROR:
-                    wx.MessageBox("Oops, something went wrong.\nIs FontForge installed and in your PATH?")
-                elif cliRetCode != PROC_SUCCESS:
-                    self.txtOutput.SetValue(strCliOutput)
-                    wx.MessageBox("The preview was not generated. Please see log for details")
-                else:
-                    self.txtOutput.SetValue(strCliOutput)
+        previewDir = tempfile.mkdtemp()
+        opts = self.genOptionsList(True, previewDir)
+        if opts:
+            cliRetCode, cliOutput = self.runCLI(opts)
+            strCliOutput = cliOutput.decode(sys.stdout.encoding)
+            # Check for success
+            if cliRetCode == PROC_OS_ERROR:
+                wx.MessageBox("Oops, something went wrong.\nIs FontForge installed and in your PATH?")
+            elif cliRetCode != PROC_SUCCESS:
+                self.txtOutput.SetValue(strCliOutput)
+                wx.MessageBox("The preview was not generated. Please see log for details")
+            else:
+                self.txtOutput.SetValue(strCliOutput)
 
-                    prev = PreviewContent(previewDir, self.getFontPaths(), "Preview Text")
-                    content = prev.genhtmlcss()
-                    htmlfile = os.path.normpath(previewDir + "/" + "prev.html")
-                    try:
-                        if content:
-                            f = open(htmlfile, "wb")
-                            f.write(content)
-                            f.close()
-                            htmlfileURL = prev.path2url(htmlfile)
+                prev = PreviewContent(previewDir, self.getFontPaths(), "Preview Text")
+                content = prev.genhtmlcss()
+                htmlfile = os.path.normpath(previewDir + "/" + "prev.html")
+                try:
+                    if content:
+                        f = open(htmlfile, "wb")
+                        f.write(content)
+                        f.close()
+                        htmlfileURL = prev.path2url(htmlfile)
 
-                            dialog = PreviewWindow(None, -1)
-                            dialog.browser.LoadURL(htmlfileURL)
-                            dialog.ShowModal()
-                            dialog.Destroy()
-                    except IOError:
-                        wx.MessageBox("There was an error writing to the preview html file.")
-        except Exception:
-            wx.MessageBox("There was an unknown error, and the preview was not generated.")
-        finally:
-            shutil.rmtree(previewDir)
+                        dialog = PreviewWindow(None, -1)
+                        dialog.browser.LoadURL(htmlfileURL)
+                        dialog.ShowModal()
+                        dialog.Destroy()
+                except IOError:
+                    wx.MessageBox("There was an error writing to the preview html file.")
+                finally:
+                    shutil.rmtree(previewDir)
 
     def getFontPaths(self):
-        fontPathsDic = {"regular": None, "italic": None, "bold": None, "bolditalic": None}
+        fontPathsDic = {"regular": u"", "italic": u"", "bold": u"", "bolditalic": u""}
         for font, style in zip(self.listTxtFont, self.listChoiceStyle):
-            if font.GetValue() and style.GetSelection() == 0:
+            if font.GetValue() and style.GetSelection() == SEL_REGULAR:
                 fontPathsDic["regular"] = os.path.join(self.fontDir, font.GetValue())
-            elif font.GetValue() and style.GetSelection() == 1:
+            elif font.GetValue() and style.GetSelection() == SEL_ITALIC:
                 fontPathsDic["italic"] = os.path.join(self.fontDir, font.GetValue())
-            elif font.GetValue() and style.GetSelection() == 2:
+            elif font.GetValue() and style.GetSelection() == SEL_BOLD:
                 fontPathsDic["bold"] = os.path.join(self.fontDir, font.GetValue())
-            elif font.GetValue() and style.GetSelection() == 3:
+            elif font.GetValue() and style.GetSelection() == SEL_BOLDITALIC:
                 fontPathsDic["bolditalic"] = os.path.join(self.fontDir, font.GetValue())
 
         return fontPathsDic
