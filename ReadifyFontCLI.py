@@ -197,11 +197,12 @@ def main():
                         Only use it for subtle weight changes", action="store_true")
     parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
                         try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
-    parser.add_argument("--previewfont", help="If specified, a preview font file will be generated in the directory "
+    parser.add_argument("-P", "--previewfont", help="If specified, a preview font file will be generated in the "
+                                                  "directory "
                                               "set by \"--previewdirectory\".\nAt least one of regular or italic font "
                                               "files should be added. The default preview order is \"regular\", "
                                               "\"italic\"", action="store_true")
-    parser.add_argument("--previewdirectory", help="The directory to store the preview font. If this is omitted, "
+    parser.add_argument("-D", "--previewdirectory", help="The directory to store the preview font. If this is omitted, "
                                                    "no preview will be generated.")
 
     args = parser.parse_args()
@@ -243,17 +244,19 @@ def main():
     addWeight = args.addweight
 
     if args.previewfont and args.previewdirectory and (fontDic[FNT_REGULAR] or fontDic[FNT_ITALIC]):
-        prevOutDir = args.previewdirectory
+        prevOutDir = args.previewdirectory.strip()
         prevFamilyName = "preview"
         if fontDic[FNT_REGULAR]:
             prevFontFile = fontDic[FNT_REGULAR]
             prevStyle = FNT_REGULAR
-        else:
+            modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
+                args.panosestrip, args.modifybearings, args.namehack, True)
+        if fontDic[FNT_ITALIC]:
             prevFontFile = fontDic[FNT_ITALIC]
             prevStyle = FNT_ITALIC
-
-        modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
+            modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
                 args.panosestrip, args.modifybearings, args.namehack, True)
+
     else:
         for style, fontFile in fontDic.iteritems():
             # Check if a font has been added before proceeding
