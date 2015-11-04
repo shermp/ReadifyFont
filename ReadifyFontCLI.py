@@ -1,9 +1,12 @@
-﻿# This script should be called using "$ fontforge -script ReadifyFontCLI.py [OPTIONS] FONTNAME"
+﻿# -*- coding: utf-8 -*-
+
+# This script should be called using "$ fontforge -script ReadifyFontCLI.py [OPTIONS] FONTNAME"
 #
 # Readify Font by Sherman Perry
 #
 # It has plenty of rough edges...
 
+from __future__ import unicode_literals
 import os
 import sys
 import argparse
@@ -15,6 +18,13 @@ FNT_BOLD = "Bold"
 FNT_BOLD_ITALIC = "BoldItalic"
 OPT_CHANGE_HINT = ("keep", "auto", "remove")
 
+def aEnc(unicodeString):
+    """
+    Many FontForge methods will not except unicode... except when they do, and are required
+    :param unicodeString:
+    :return:
+    """
+    return unicodeString.encode(encoding="ascii")
 
 def changeWeight(glyph, emboldenAmount, modifyBearings):
     """
@@ -77,13 +87,13 @@ def generateFlags(stripHints, legacyKern):
     :return:
     """
     if stripHints == "remove" and legacyKern:
-        flags = ("opentype", "old-kern", "round", "no-hints")
+        flags = (aEnc("opentype"), aEnc("old-kern"), aEnc("round"), aEnc("no-hints"))
     elif stripHints == "remove" and not legacyKern:
-        flags = ("opentype", "round", "no-hints")
+        flags = (aEnc("opentype"), aEnc("round"), aEnc("no-hints"))
     elif legacyKern and stripHints == "keep":
-        flags = ("opentype", "old-kern", "round")
+        flags = (aEnc("opentype"), aEnc("old-kern"), aEnc("round"))
     else:
-        flags = ("opentype", "round")
+        flags = (aEnc("opentype"), aEnc("round"))
     return flags
 
     
@@ -104,12 +114,12 @@ def setNames(font, family, subfamily):
     font.familyname = family
     font.fullname = fullName
     # Set SFNT names
-    font.appendSFNTName("English (US)", "Family", unicode(family, "utf-8"))
+    font.appendSFNTName(aEnc("English (US)"), aEnc("Family"), family)
     if subfamily == FNT_BOLD_ITALIC:
-        font.appendSFNTName("English (US)", "SubFamily", unicode("Bold Italic", "utf-8"))
+        font.appendSFNTName(aEnc("English (US)"), aEnc("SubFamily"), "Bold Italic")
     else:
-        font.appendSFNTName("English (US)", "SubFamily", unicode(subfamily, "utf-8"))
-        font.appendSFNTName("English (US)", "Fullname", unicode(fullName, "utf-8"))
+        font.appendSFNTName(aEnc("English (US)"), aEnc("SubFamily"), subfamily)
+        font.appendSFNTName(aEnc("English (US)"), aEnc("Fullname"), fullName)
 
 
 def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
@@ -119,11 +129,11 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
     if preview:
-        f.selection.select(("ranges",None),"A","z")
+        f.selection.select((aEnc("ranges"),None),aEnc("A"),aEnc("z"))
         f.copy()
 
         n = fontforge.font()
-        n.selection.select(("ranges",None),"A","z")
+        n.selection.select((aEnc("ranges"),None),aEnc("A"),aEnc("z"))
         n.paste()
         n.fontname="preview"
         n.save(newFontFile)
@@ -204,6 +214,7 @@ def main():
                                               "\"italic\"", action="store_true")
     parser.add_argument("-D", "--previewdirectory", help="The directory to store the preview font. If this is omitted, "
                                                    "no preview will be generated.")
+    parser.add_argument("-T", "--previewtext", help="Characters that will be used for font preview")
 
     args = parser.parse_args()
 
