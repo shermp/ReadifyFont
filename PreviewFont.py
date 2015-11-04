@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import os
 import wx
 import wx.html2
@@ -39,7 +40,6 @@ class PreviewContent():
                     previewFontPath = os.path.normpath(self.previewDir + "/" + font)
                     fontFaceCSS = tempFaceCSS.format(self.path2url(previewFontPath))
 
-            print(fontFaceCSS)
             for style, font in self.origFontDic.iteritems():
                 if style.lower() == "regular":
                     tempFaceCSS = "@font-face {{ font-family: 'original'; font-weight: normal; font-style: normal; " \
