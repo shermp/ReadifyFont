@@ -1,4 +1,6 @@
-﻿from ReadifyFrame import *
+﻿# -*- coding: utf-8 -*-
+
+from ReadifyFrame import *
 from PreviewFont import *
 import os
 import subprocess
@@ -153,12 +155,17 @@ class ReadifyFontGUI(ReadifyFrame):
         for key, val in optsDic.iteritems():
             if val and key != "fontname":
                 optionsList.append(val)
+        # Add preview specific arguments if this is to be used for generating a preview font
         if preview:
             optionsList.append("-P")
             optionsList.append("-D "+prevDir)
         optionsList.append(optsDic["fontname"])
-
-        return optionsList
+        sysEncOptionsList = []
+        # Lets encode the call and arguments to the script in the system encoding
+        for option in optionsList:
+            s = option.encode(sys.getfilesystemencoding())
+            sysEncOptionsList.append(s)
+        return sysEncOptionsList
 
     def runCLI(self, optList):
         """
@@ -183,6 +190,11 @@ class ReadifyFontGUI(ReadifyFrame):
     Here, I can use CSS to load the font file for viewing.
     """
     def previewFont(self, event ):
+        """
+        Displays a preview of what the font should look like after conversion.
+        :param event:
+        :return:
+        """
         previewDir = tempfile.mkdtemp()
         opts = self.genOptionsList(True, previewDir)
         if opts:
@@ -215,8 +227,14 @@ class ReadifyFontGUI(ReadifyFrame):
                     wx.MessageBox("There was an error writing to the preview html file.")
                 finally:
                     shutil.rmtree(previewDir)
+        else:
+            shutil.rmtree(previewDir)
 
     def getFontPaths(self):
+        """
+        Generate font paths
+        :return:
+        """
         fontPathsDic = {"regular": u"", "italic": u"", "bold": u"", "bolditalic": u""}
         for font, style in zip(self.listTxtFont, self.listChoiceStyle):
             if font.GetValue() and style.GetSelection() == SEL_REGULAR:
