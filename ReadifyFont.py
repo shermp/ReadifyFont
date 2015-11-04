@@ -1,5 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 from ReadifyFrame import *
 from PreviewFont import *
 import os
@@ -235,7 +236,7 @@ class ReadifyFontGUI(ReadifyFrame):
         Generate font paths
         :return:
         """
-        fontPathsDic = {"regular": u"", "italic": u"", "bold": u"", "bolditalic": u""}
+        fontPathsDic = {"regular": "", "italic": "", "bold": "", "bolditalic": ""}
         for font, style in zip(self.listTxtFont, self.listChoiceStyle):
             if font.GetValue() and style.GetSelection() == SEL_REGULAR:
                 fontPathsDic["regular"] = os.path.join(self.fontDir, font.GetValue())
