@@ -66,7 +66,7 @@ class ReadifyFontGUI(ReadifyFrame):
         :param event:
         :return:
         """
-        optionsList = self.genOptionsList(preview=False, prevDir=None)
+        optionsList = self.genOptionsList(preview=False, prevDir=None, prevText=None)
         # Check to make sure genOptionsList() does not return errors before continuing
         if optionsList:
             # Run script, and obtain its outputs
@@ -82,7 +82,7 @@ class ReadifyFontGUI(ReadifyFrame):
                 self.txtOutput.SetValue(strCliOutput)
                 wx.MessageBox("The font was successfully generated!")
 
-    def genOptionsList(self, preview, prevDir):
+    def genOptionsList(self, preview, prevDir, prevText):
         """
         Generate a list of options from the controls in the GUI
         :param preview:
@@ -160,6 +160,7 @@ class ReadifyFontGUI(ReadifyFrame):
         if preview:
             optionsList.append("-P")
             optionsList.append("-D "+prevDir)
+            optionsList.append("-T "+prevText)
         optionsList.append(optsDic["fontname"])
         sysEncOptionsList = []
         # Lets encode the call and arguments to the script in the system encoding
@@ -196,40 +197,46 @@ class ReadifyFontGUI(ReadifyFrame):
         :param event:
         :return:
         """
-        previewDir = tempfile.mkdtemp()
-        opts = self.genOptionsList(True, previewDir)
-        if opts:
-            cliRetCode, cliOutput = self.runCLI(opts)
-            strCliOutput = cliOutput.decode(sys.stdout.encoding)
-            # Check for success
-            if cliRetCode == PROC_OS_ERROR:
-                wx.MessageBox("Oops, something went wrong.\nIs FontForge installed and in your PATH?")
-            elif cliRetCode != PROC_SUCCESS:
-                self.txtOutput.SetValue(strCliOutput)
-                wx.MessageBox("The preview was not generated. Please see log for details")
+        previewText = self.txtPreview.GetValue()
+        if previewText:
+            previewDir = tempfile.mkdtemp()
+            opts = self.genOptionsList(True, previewDir, previewText)
+            if opts:
+                self.txtOutput.SetValue(wx.EmptyString)
+                cliRetCode, cliOutput = self.runCLI(opts)
+                strCliOutput = cliOutput.decode(sys.stdout.encoding)
+                # Check for success
+                if cliRetCode == PROC_OS_ERROR:
+                    wx.MessageBox("Oops, something went wrong.\nIs FontForge installed and in your PATH?")
+                elif cliRetCode != PROC_SUCCESS:
+                    self.txtOutput.SetValue(strCliOutput)
+                    wx.MessageBox("The preview was not generated. Please see log for details")
+                else:
+                    self.txtOutput.SetValue(strCliOutput)
+
+                    prev = PreviewContent(previewDir, self.getFontPaths(), previewText)
+                    content = prev.genhtmlcss()
+                    htmlfile = os.path.normpath(previewDir + "/" + "prev.html")
+                    try:
+                        if content:
+                            f = open(htmlfile, "wb")
+                            f.write(content)
+                            f.close()
+                            htmlfileURL = prev.path2url(htmlfile)
+
+                            dialog = PreviewWindow(None, -1)
+                            dialog.browser.LoadURL(htmlfileURL)
+                            dialog.ShowModal()
+                            dialog.Destroy()
+                    except IOError:
+                        wx.MessageBox("There was an error writing to the preview html file.")
+                    finally:
+                        shutil.rmtree(previewDir)
+                        self.txtOutput.SetValue(wx.EmptyString)
             else:
-                self.txtOutput.SetValue(strCliOutput)
-
-                prev = PreviewContent(previewDir, self.getFontPaths(), "Preview Text")
-                content = prev.genhtmlcss()
-                htmlfile = os.path.normpath(previewDir + "/" + "prev.html")
-                try:
-                    if content:
-                        f = open(htmlfile, "wb")
-                        f.write(content)
-                        f.close()
-                        htmlfileURL = prev.path2url(htmlfile)
-
-                        dialog = PreviewWindow(None, -1)
-                        dialog.browser.LoadURL(htmlfileURL)
-                        dialog.ShowModal()
-                        dialog.Destroy()
-                except IOError:
-                    wx.MessageBox("There was an error writing to the preview html file.")
-                finally:
-                    shutil.rmtree(previewDir)
+                shutil.rmtree(previewDir)
         else:
-            shutil.rmtree(previewDir)
+            wx.MessageBox("Please enter some preview text!")
 
     def getFontPaths(self):
         """

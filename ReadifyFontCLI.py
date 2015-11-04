@@ -121,20 +121,36 @@ def setNames(font, family, subfamily):
         font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), subfamily)
         font.appendSFNTName(tEnc("English (US)"), tEnc("Fullname"), fullName)
 
+def getCodePointList(prevText):
+    charList = list(set(prevText))
+    ordList = []
+    for c in charList:
+        ordList.append(ord(c))
+    return ordList
 
 def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
-            nameHack, preview):
+            nameHack, preview, prevText):
     # Open font file and immediately save as a fontforge file
     f = fontforge.open(fontFile.strip())
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
     if preview:
-        f.selection.select((tEnc("ranges"), None), tEnc("A"), tEnc("z"))
+        cpList = getCodePointList(prevText)
+        if cpList:
+            for cp in cpList:
+                f.selection.select((tEnc("more"), None), cp)
+        else:
+             f.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
         f.copy()
 
         n = fontforge.font()
-        n.selection.select((tEnc("ranges"), None), tEnc("A"), tEnc("z"))
+        if cpList:
+            for cp in cpList:
+                n.selection.select((tEnc("more"), None), cp)
+        else:
+            n.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
         n.paste()
+
         n.fontname="preview"
         n.save(newFontFile)
     else:
@@ -261,19 +277,19 @@ def main():
             prevFontFile = fontDic[FNT_REGULAR]
             prevStyle = FNT_REGULAR
             modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
-                args.panosestrip, args.modifybearings, args.namehack, True)
+                args.panosestrip, args.modifybearings, args.namehack, preview=True, prevText=args.previewtext.strip())
         if fontDic[FNT_ITALIC]:
             prevFontFile = fontDic[FNT_ITALIC]
             prevStyle = FNT_ITALIC
             modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
-                args.panosestrip, args.modifybearings, args.namehack, True)
+                args.panosestrip, args.modifybearings, args.namehack, preview=True, prevText=args.previewtext.strip())
 
     else:
         for style, fontFile in fontDic.iteritems():
             # Check if a font has been added before proceeding
             if fontFile:
                 modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
-                        args.modifybearings, args.namehack, False)
+                        args.modifybearings, args.namehack, preview=False, prevText=None)
 
 if __name__ == "__main__":
     main()
