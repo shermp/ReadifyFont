@@ -18,13 +18,13 @@ FNT_BOLD = "Bold"
 FNT_BOLD_ITALIC = "BoldItalic"
 OPT_CHANGE_HINT = ("keep", "auto", "remove")
 
-def aEnc(unicodeString):
+def tEnc(unicodeString):
     """
     Many FontForge methods will not except unicode... except when they do, and are required
     :param unicodeString:
     :return:
     """
-    return unicodeString.encode(encoding="ascii")
+    return unicodeString.encode(encoding="utf-8")
 
 def changeWeight(glyph, emboldenAmount, modifyBearings):
     """
@@ -87,13 +87,13 @@ def generateFlags(stripHints, legacyKern):
     :return:
     """
     if stripHints == "remove" and legacyKern:
-        flags = (aEnc("opentype"), aEnc("old-kern"), aEnc("round"), aEnc("no-hints"))
+        flags = (tEnc("opentype"), tEnc("old-kern"), tEnc("round"), tEnc("no-hints"))
     elif stripHints == "remove" and not legacyKern:
-        flags = (aEnc("opentype"), aEnc("round"), aEnc("no-hints"))
+        flags = (tEnc("opentype"), tEnc("round"), tEnc("no-hints"))
     elif legacyKern and stripHints == "keep":
-        flags = (aEnc("opentype"), aEnc("old-kern"), aEnc("round"))
+        flags = (tEnc("opentype"), tEnc("old-kern"), tEnc("round"))
     else:
-        flags = (aEnc("opentype"), aEnc("round"))
+        flags = (tEnc("opentype"), tEnc("round"))
     return flags
 
     
@@ -114,12 +114,12 @@ def setNames(font, family, subfamily):
     font.familyname = family
     font.fullname = fullName
     # Set SFNT names
-    font.appendSFNTName(aEnc("English (US)"), aEnc("Family"), family)
+    font.appendSFNTName(tEnc("English (US)"), tEnc("Family"), family)
     if subfamily == FNT_BOLD_ITALIC:
-        font.appendSFNTName(aEnc("English (US)"), aEnc("SubFamily"), "Bold Italic")
+        font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), "Bold Italic")
     else:
-        font.appendSFNTName(aEnc("English (US)"), aEnc("SubFamily"), subfamily)
-        font.appendSFNTName(aEnc("English (US)"), aEnc("Fullname"), fullName)
+        font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), subfamily)
+        font.appendSFNTName(tEnc("English (US)"), tEnc("Fullname"), fullName)
 
 
 def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
@@ -129,11 +129,11 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
     if preview:
-        f.selection.select((aEnc("ranges"),None),aEnc("A"),aEnc("z"))
+        f.selection.select((tEnc("ranges"), None), tEnc("A"), tEnc("z"))
         f.copy()
 
         n = fontforge.font()
-        n.selection.select((aEnc("ranges"),None),aEnc("A"),aEnc("z"))
+        n.selection.select((tEnc("ranges"), None), tEnc("A"), tEnc("z"))
         n.paste()
         n.fontname="preview"
         n.save(newFontFile)
