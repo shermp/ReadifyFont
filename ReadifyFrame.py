@@ -125,7 +125,7 @@ class ReadifyFrame ( wx.Frame ):
                                          "WARNING: This reduces the spacing between glyphs, and should not be used if "
                                          "you have added too much weight.")
         contDarkenFont.Add( self.chkBearing, 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
-                
+
         parentCont.Add( contDarkenFont, 0, wx.EXPAND, 5 )
 
         # Output Directory Picker #
@@ -141,6 +141,24 @@ class ReadifyFrame ( wx.Frame ):
         contOut.Add( self.pickerOutDir, 1, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
 
         parentCont.Add( contOut, 0, wx.EXPAND, 5 )
+
+        # Preview Font
+        contPreviewFont = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.lblPreviewFont = wx.StaticText( self, wx.ID_ANY, u"Preview Text", wx.DefaultPosition, wx.DefaultSize,
+                                          0 )
+        self.lblPreviewFont.Wrap( -1 )
+        self.lblPreviewFont.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
+        contPreviewFont.Add( self.lblPreviewFont, 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
+
+        self.txtPreview = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
+        contPreviewFont.Add( self.txtPreview, 1, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
+
+        self.btnPrevFont = wx.Button( self, wx.ID_ANY, u"Preview Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnPrevFont.SetToolTipString("Preview the changes using a small subset of the font.")
+        contPreviewFont.Add( self.btnPrevFont, 0, wx.ALL, 5 )
+
+        parentCont.Add( contPreviewFont, 0, wx.EXPAND, 5 )
 
         # Log Output #
         contOutput = wx.BoxSizer( wx.VERTICAL )
@@ -165,9 +183,6 @@ class ReadifyFrame ( wx.Frame ):
         self.btnGenTTF.SetToolTipString("Generates a new set of font files using the information entered above.")
         contGenerate.Add( self.btnGenTTF, 0, wx.ALL, 5 )
 
-        self.btnPrevFont = wx.Button( self, wx.ID_ANY, u"Preview Font", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.btnPrevFont.SetToolTipString("Preview the changes using a small subset of the font.")
-        contGenerate.Add( self.btnPrevFont, 0, wx.ALL, 5 )
 
         self.btnClear = wx.Button( self, wx.ID_ANY, u"Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnClear.SetToolTipString("Clear all fields in the form.")
