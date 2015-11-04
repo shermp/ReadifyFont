@@ -7,6 +7,7 @@
 ## PLEASE DO "NOT" EDIT THIS FILE! -- Ummmm... Oops?
 ###########################################################################
 
+from __future__ import unicode_literals
 import wx
 import wx.xrc
 
@@ -38,7 +39,7 @@ class ReadifyFrame ( wx.Frame ):
         
         self.listTxtFont = []
         self.listChoiceStyle = []
-        chceStyleChoices = [ u"Regular", u"Italic", u"Bold", u"Bold Italic", wx.EmptyString ]
+        chceStyleChoices = [ "Regular", "Italic", "Bold", "Bold Italic", wx.EmptyString ]
 
         for i in range(0,4):
             listContFontLayout.append( wx.BoxSizer( wx.HORIZONTAL ) )
@@ -53,7 +54,7 @@ class ReadifyFrame ( wx.Frame ):
         
         contFont.Add( contFonts, 1, wx.EXPAND, 5 )
         
-        self.btnChooseFont = wx.Button( self, wx.ID_ANY, u"Browse Fonts...", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnChooseFont = wx.Button( self, wx.ID_ANY, "Browse Fonts...", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnChooseFont.SetToolTipString("Choose one or more fonts to modify.")
         contFont.Add( self.btnChooseFont, 0, wx.ALL, 5 )
                 
@@ -63,7 +64,7 @@ class ReadifyFrame ( wx.Frame ):
         # Font Name #
         contFontName = wx.BoxSizer( wx.HORIZONTAL )
         
-        self.lblFontFamName = wx.StaticText( self, wx.ID_ANY, u"Font Family Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.lblFontFamName = wx.StaticText( self, wx.ID_ANY, "Font Family Name", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.lblFontFamName.Wrap( -1 )
         self.lblFontFamName.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
         
@@ -82,22 +83,22 @@ class ReadifyFrame ( wx.Frame ):
         self.chkHint.SetToolTipString("Strip hinting information from the generated TrueType font")
         contOptions.Add( self.chkHint, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         """
-        self.chkKern = wx.CheckBox( self, wx.ID_ANY, u"Legacy Kerning", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.chkKern = wx.CheckBox( self, wx.ID_ANY, "Legacy Kerning", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkKern.SetToolTipString("Some readers and software require 'legacy', or 'old style' kerning to be "
                                       "present for kerning to work.")
         contOptions.Add( self.chkKern, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         
-        self.chkPANOSE = wx.CheckBox( self, wx.ID_ANY, u"Remove PANOSE", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.chkPANOSE = wx.CheckBox( self, wx.ID_ANY, "Remove PANOSE", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkPANOSE.SetToolTipString("Kobo readers can get confused by PANOSE settings. This option sets all "
                                         "PANOSE information to 0, or 'any'")
         contOptions.Add( self.chkPANOSE, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
         
-        self.chkAltName = wx.CheckBox( self, wx.ID_ANY, u"Alt. Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.chkAltName = wx.CheckBox( self, wx.ID_ANY, "Alt. Name", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkAltName.SetToolTipString("Some fonts have issues with renaming. If the generated font does not have "
                                          "the same internal font name as you entered, try enabling this option.")
         contOptions.Add( self.chkAltName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        rboxHintsChoices = [ u"Keep Existing", u"Remove Existing", u"Autohint" ]
+        rboxHintsChoices = [ "Keep Existing", "Remove Existing", "Autohint" ]
         self.rboxHints = wx.RadioBox( self, wx.ID_ANY, u"Hints", wx.DefaultPosition, wx.DefaultSize, rboxHintsChoices, 1, wx.RA_SPECIFY_ROWS )
         self.rboxHints.SetSelection( 0 )
         contOptions.Add( self.rboxHints, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
@@ -107,7 +108,7 @@ class ReadifyFrame ( wx.Frame ):
         # Darken Settings #
         contDarkenFont = wx.BoxSizer( wx.HORIZONTAL )
         
-        self.lblDarkenAmount = wx.StaticText( self, wx.ID_ANY, u"Darken Font Amount", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.lblDarkenAmount = wx.StaticText( self, wx.ID_ANY, "Darken Font Amount", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.lblDarkenAmount.Wrap( -1 )
         self.lblDarkenAmount.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
         
@@ -119,7 +120,7 @@ class ReadifyFrame ( wx.Frame ):
                                               "\n10-15 seems to work well to make fonts a bit darker.")
         contDarkenFont.Add( self.txtDarkenAmount, 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
         
-        self.chkBearing = wx.CheckBox( self, wx.ID_ANY, u"Adjust Bearing", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.chkBearing = wx.CheckBox( self, wx.ID_ANY, "Adjust Bearing", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkBearing.SetToolTipString("By default, adding weight to a font increases glyph width. Enable this "
                                          "option to set the glyph width to be roughly equal to the original.\n"
                                          "WARNING: This reduces the spacing between glyphs, and should not be used if "
@@ -131,12 +132,12 @@ class ReadifyFrame ( wx.Frame ):
         # Output Directory Picker #
         contOut = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.lblOutDir = wx.StaticText( self, wx.ID_ANY, u"Output Directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.lblOutDir = wx.StaticText( self, wx.ID_ANY, "Output Directory", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.lblOutDir.Wrap( -1 )
         self.lblOutDir.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
         contOut.Add( self.lblOutDir, 0, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
         
-        self.pickerOutDir = wx.DirPickerCtrl( self, wx.ID_ANY, u"", u"Select a folder", wx.DefaultPosition, wx.DefaultSize, wx.DIRP_DEFAULT_STYLE )
+        self.pickerOutDir = wx.DirPickerCtrl( self, wx.ID_ANY, "", "Select a folder", wx.DefaultPosition, wx.DefaultSize, wx.DIRP_DEFAULT_STYLE )
         self.pickerOutDir.SetToolTipString("Choose the output directory to save the modified font files in.")
         contOut.Add( self.pickerOutDir, 1, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
 
@@ -145,7 +146,7 @@ class ReadifyFrame ( wx.Frame ):
         # Preview Font
         contPreviewFont = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.lblPreviewFont = wx.StaticText( self, wx.ID_ANY, u"Preview Text", wx.DefaultPosition, wx.DefaultSize,
+        self.lblPreviewFont = wx.StaticText( self, wx.ID_ANY, "Preview Text", wx.DefaultPosition, wx.DefaultSize,
                                           0 )
         self.lblPreviewFont.Wrap( -1 )
         self.lblPreviewFont.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
@@ -154,7 +155,7 @@ class ReadifyFrame ( wx.Frame ):
         self.txtPreview = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
         contPreviewFont.Add( self.txtPreview, 1, wx.ALIGN_CENTRE_VERTICAL|wx.ALL, 5 )
 
-        self.btnPrevFont = wx.Button( self, wx.ID_ANY, u"Preview Font", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnPrevFont = wx.Button( self, wx.ID_ANY, "Preview Font", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnPrevFont.SetToolTipString("Preview the changes using a small subset of the font.")
         contPreviewFont.Add( self.btnPrevFont, 0, wx.ALL, 5 )
 
@@ -163,7 +164,7 @@ class ReadifyFrame ( wx.Frame ):
         # Log Output #
         contOutput = wx.BoxSizer( wx.VERTICAL )
 
-        self.lblOutputLog = wx.StaticText( self, wx.ID_ANY, u"Output Log", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+        self.lblOutputLog = wx.StaticText( self, wx.ID_ANY, "Output Log", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
         self.lblOutputLog.Wrap( -1 )
         self.lblOutputLog.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
         
@@ -179,12 +180,12 @@ class ReadifyFrame ( wx.Frame ):
         # Buttons #
         contGenerate = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.btnGenTTF = wx.Button( self, wx.ID_ANY, u"Generate TTF", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnGenTTF = wx.Button( self, wx.ID_ANY, "Generate TTF", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnGenTTF.SetToolTipString("Generates a new set of font files using the information entered above.")
         contGenerate.Add( self.btnGenTTF, 0, wx.ALL, 5 )
 
 
-        self.btnClear = wx.Button( self, wx.ID_ANY, u"Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.btnClear = wx.Button( self, wx.ID_ANY, "Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.btnClear.SetToolTipString("Clear all fields in the form.")
         contGenerate.Add( self.btnClear, 0, wx.ALL, 5 )
 
