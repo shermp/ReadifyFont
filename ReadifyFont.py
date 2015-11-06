@@ -1,14 +1,19 @@
 ﻿# -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 from ReadifyFrame import *
 from PreviewFont import *
+from helper import *
 import os
 import subprocess
 import sys
 import tempfile
 import shutil
 
+if sys.version_info.major == 2:
+    PYTHON_TWO = True
+else:
+    PYTHON_TWO = False
 MISSING_VALUE = 1
 INVALID_VALUE = 2
 PROC_OS_ERROR = 100
@@ -86,6 +91,8 @@ class ReadifyFontGUI(ReadifyFrame):
         """
         Generate a list of options from the controls in the GUI
         :param preview:
+        :param prevDir:
+        :param prevText:
         :return:
         """
         # Create a dictionary of all possible command line arguments, and set all values to None
@@ -93,7 +100,7 @@ class ReadifyFontGUI(ReadifyFrame):
             "legacykern" : None, "outputdir" : None, "addweight" : None, "panosestrip" : None, "modbearings" : None, "namehack" : None}
 
         # If a font file exits, set its option in the dictionary
-        for style, fontPath in self.getFontPaths().iteritems():
+        for style, fontPath in iterDic(self.getFontPaths(), PYTHON_TWO):
             if style == "regular":
                 optsDic["regular"] = "-r " + fontPath
             elif style == "italic":
@@ -153,7 +160,7 @@ class ReadifyFontGUI(ReadifyFrame):
 
         # Create a list of command line arguments to pass to subprocess
         optionsList = ["fontforge", "-script", "ReadifyFontCLI.py"]
-        for key, val in optsDic.iteritems():
+        for key, val in iterDic(optsDic, PYTHON_TWO):
             if val and key != "fontname":
                 optionsList.append(val)
         # Add preview specific arguments if this is to be used for generating a preview font

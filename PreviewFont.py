@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import sys
 import wx
 import wx.html2
 import urlparse, urllib
+from helper import *
 
 class PreviewContent():
+    if sys.version_info.major == 2:
+        PYTHON_TWO = True
+    else:
+        PYTHON_TWO = False
     previewDir = ""
     previewFontList = []
     origFontDic = None
@@ -40,7 +46,7 @@ class PreviewContent():
                     previewFontPath = os.path.normpath(self.previewDir + "/" + font)
                     fontFaceCSS = tempFaceCSS.format(self.path2url(previewFontPath))
 
-            for style, font in self.origFontDic.iteritems():
+            for style, font in iterDic(self.origFontDic, self.PYTHON_TWO):
                 if style.lower() == "regular":
                     tempFaceCSS = "@font-face {{ font-family: 'original'; font-weight: normal; font-style: normal; " \
                                    "src: url('{0}'); }}\n"
@@ -58,7 +64,7 @@ class PreviewContent():
                 elif "italic" in font.lower():
                     paragraphCSS += "p.prevIta { font-family: 'preview'; font-style: italic; font-size: 20pt; }\n"
 
-            for style, font in self.origFontDic.iteritems():
+            for style, font in iterDic(self.origFontDic, self.PYTHON_TWO):
                 if style.lower() == "regular":
                     paragraphCSS += "p.origReg { font-family: 'original'; font-size: 20pt; }\n"
                 elif style.lower() == "italic":

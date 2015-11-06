@@ -6,12 +6,17 @@
 #
 # It has plenty of rough edges...
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import sys
 import argparse
+from helper import *
 import fontforge
 
+if sys.version_info.major == 2:
+    PYTHON_TWO = True
+else:
+    PYTHON_TWO = False
 FNT_REGULAR = "Regular"
 FNT_ITALIC = "Italic"
 FNT_BOLD = "Bold"
@@ -20,11 +25,15 @@ OPT_CHANGE_HINT = ("keep", "auto", "remove")
 
 def tEnc(unicodeString):
     """
-    Many FontForge methods will not except unicode... except when they do, and are required
+    Many FontForge methods will not except unicode... except when they do, and are required.
+    Returns an unmodified unicode object if python 3 is the interpreter.
     :param unicodeString:
     :return:
     """
-    return unicodeString.encode(encoding="utf-8")
+    if PYTHON_TWO:
+        return unicodeString.encode(encoding="utf-8")
+    else:
+        return unicodeString
 
 def changeWeight(glyph, emboldenAmount, modifyBearings):
     """
@@ -285,7 +294,7 @@ def main():
                 args.panosestrip, args.modifybearings, args.namehack, preview=True, prevText=args.previewtext.strip())
 
     else:
-        for style, fontFile in fontDic.iteritems():
+        for style, fontFile in iterDic(fontDic, PYTHON_TWO):
             # Check if a font has been added before proceeding
             if fontFile:
                 modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
