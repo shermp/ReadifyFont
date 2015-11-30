@@ -165,9 +165,9 @@ class ReadifyFontGUI(ReadifyFrame):
                 optionsList.append(val)
         # Add preview specific arguments if this is to be used for generating a preview font
         if preview:
-            optionsList.append("-P")
+            optionsList.append("-P "+prevText)
             optionsList.append("-D "+prevDir)
-            optionsList.append("-T "+prevText)
+#            optionsList.append("-T "+prevText)
         optionsList.append(optsDic["fontname"])
         sysEncOptionsList = []
         # Lets encode the call and arguments to the script in the system encoding
