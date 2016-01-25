@@ -160,7 +160,7 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
             n.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
         n.paste()
 
-        n.fontname="preview"
+        n.fontname="RF-Prev-"+style
         n.save(newFontFile)
     else:
         f.save(newFontFile)
@@ -244,7 +244,7 @@ def main():
     args = parser.parse_args()
 
     if not any((args.regular, args.italic, args.bold, args.bolditalic)):
-        raw_input("At least one font must be specified. Press ENTER to exit...")
+        input("At least one font must be specified. Press ENTER to exit...")
         sys.exit()
 
     fontDic = {FNT_REGULAR : args.regular, FNT_ITALIC : args.italic, FNT_BOLD : args.bold, FNT_BOLD_ITALIC : args.bolditalic}

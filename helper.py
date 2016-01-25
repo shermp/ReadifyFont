@@ -13,3 +13,15 @@ def iterDic(dic, pythonTwo):
         return dic.viewitems()
     else:
         return dic.items()
+
+def calc_grid_pos(pos, cols):
+    """
+    A little function to calculate the grid position of checkboxes
+    :param pos:
+    :param cols:
+    :return:
+    """
+    calc_row = pos // cols
+    calc_col = pos % cols
+
+    return calc_row, calc_col
