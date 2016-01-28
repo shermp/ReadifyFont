@@ -141,8 +141,10 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
             nameHack, preview):
     # Open font file and immediately save as a fontforge file
     f = fontforge.open(fontFile.strip())
+    tempOrigName = 'rf-orig'
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
+    tempOrigTTF = os.path.normpath(outDir+"/"+tempOrigName+"-"+style+".ttf")
     if preview:
         cpList = getCodePointList(preview)
         if cpList:
@@ -160,8 +162,13 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
             n.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
         n.paste()
 
-        n.fontname="RF-Prev-"+style
+        n.fontname=newFamilyName
         n.save(newFontFile)
+
+        setNames(n, tempOrigName, style)
+        n.os2_panose = (0,0,0,0,0,0,0,0,0,0)
+        nFlags = generateFlags(None, None)
+        n.generate(tempOrigTTF, flags=nFlags)
     else:
         f.save(newFontFile)
     f.close()
@@ -286,7 +293,7 @@ def main():
 
     if args.previewfont and args.previewdirectory and (fontDic[FNT_REGULAR] or fontDic[FNT_ITALIC]):
         prevOutDir = args.previewdirectory.strip()
-        prevFamilyName = "preview"
+        prevFamilyName = "rf-prev"
         if fontDic[FNT_REGULAR]:
             prevFontFile = fontDic[FNT_REGULAR]
             prevStyle = FNT_REGULAR
