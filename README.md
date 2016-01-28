@@ -22,7 +22,7 @@ The script can do the following:
 Included is a simple GUI wrapper to the script that allows you to choose font files, set options, and generates new
 font files.
 
-It is built using wxPython.
+It is built using PyQt.
 
 ## CLI
 

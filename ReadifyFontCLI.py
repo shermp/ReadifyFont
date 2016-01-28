@@ -187,7 +187,7 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
         if changeHints == "auto":
             glyph.autoHint()
 
-    # If I"ve understood things correctly, this should be the same as setting the curves in the
+    # If I've understood things correctly, this should be the same as setting the curves in the
     # font information screen of the GUI
     for l in range(0, f.layer_cnt):
         if not f.layers[l].is_quadratic:

@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGroupBox, QGridLayout, \
-    QLineEdit, QCheckBox, QComboBox, QRadioButton, QSlider, QLabel, QPushButton, QFileDialog, QTextEdit
+    QLineEdit, QCheckBox, QComboBox, QRadioButton, QSlider, QLabel, QPushButton, QFileDialog, QTextEdit, \
+    QProgressBar, QMessageBox
 from PyQt5.QtCore import Qt, QProcess
+from PyQt5.QtGui import QFont
 from FontInfo import FontInfo
 import os
 import sys
@@ -24,6 +26,11 @@ class RF_Qt(QMainWindow):
         self.cli_process = QProcess(self)
         self.cli_process.setProcessChannelMode(QProcess.MergedChannels)
         self.cli_process.readyRead.connect(self.dataReady)
+        self.cli_process.started.connect(self.manage_proc)
+        self.cli_process.finished.connect(self.manage_proc)
+        self.cli_process.error.connect(self.manage_proc)
+
+        gb_style = 'QGroupBox { font-weight: bold; }'
         win_layout = QVBoxLayout()
         gb_fnt_files = QGroupBox('Font Files')
         gb_fnt_files.setStyleSheet('QGroupBox { font-weight: bold; }')
@@ -50,7 +57,7 @@ class RF_Qt(QMainWindow):
 
         # New Font Name #
         gb_fnt_name = QGroupBox('Font Family Name')
-        gb_fnt_name.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_fnt_name.setStyleSheet(gb_style)
         hb_fnt_name = QHBoxLayout()
         self.new_fnt_name = QLineEdit()
         self.new_fnt_name.setToolTip('Enter a name for the modified font.')
@@ -64,7 +71,7 @@ class RF_Qt(QMainWindow):
 
         ## Kerning, Panose, Alt. Name ##
         gb_basic_opt = QGroupBox('Basic Options')
-        gb_basic_opt.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_basic_opt.setStyleSheet(gb_style)
         hb_basic_opt = QHBoxLayout()
         self.basic_opt_list = []
         basic_tooltips = ('<qt/>Some readers and software require \'legacy\', or \'old style\' kerning to be '
@@ -84,7 +91,7 @@ class RF_Qt(QMainWindow):
 
         ## Hinting ##
         gb_hint_opt = QGroupBox('Hinting Option')
-        gb_hint_opt.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_hint_opt.setStyleSheet(gb_style)
         hb_hint_opt = QHBoxLayout()
         self.hint_opt_list = []
         for opt in ('Keep Existing', 'Remove Existing', 'AutoHint'):
@@ -100,7 +107,7 @@ class RF_Qt(QMainWindow):
 
         ## Darken ##
         gb_dark_opt = QGroupBox('Darken Options')
-        gb_dark_opt.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_dark_opt.setStyleSheet(gb_style)
         hb_dark_opt = QHBoxLayout()
         self.darken_opt = QCheckBox('Darken Font')
         self.darken_opt.setToolTip('<qt/>Darken, or add weight to a font to make it easier to read on e-ink screens.')
@@ -109,7 +116,8 @@ class RF_Qt(QMainWindow):
         self.mod_bearing_opt = QCheckBox('Modify Bearings')
         self.mod_bearing_opt.setToolTip('<qt/>By default, adding weight to a font increases glyph width. Enable this '
                                         'option to set the glyph width to be roughly equal to the original.<br/><br/>'
-                                        'WARNING: This reduces the spacing between glyphs, and should not be used if')
+                                        'WARNING: This reduces the spacing between glyphs, and should not be used if '
+                                        'you have added too much weight.')
         self.mod_bearing_opt.toggled.connect(self.set_mod_bearing)
         self.mod_bearing_opt.setEnabled(False)
         hb_dark_opt.addWidget(self.mod_bearing_opt)
@@ -132,26 +140,40 @@ class RF_Qt(QMainWindow):
 
         win_layout.addWidget(gb_dark_opt)
 
+        # Preview #
+        self.prev_text = ''
+        self.prev_dir = ''
+        gb_preview = QGroupBox('Preview Font')
+        gb_preview.setStyleSheet(gb_style)
+
         # Buttons #
         hb_buttons = QHBoxLayout()
-        hb_buttons.addStretch()
+        #hb_buttons.addStretch()
         self.gen_ttf_btn = QPushButton('Generate TTF')
         self.gen_ttf_btn.clicked.connect(self.gen_ttf)
         hb_buttons.addWidget(self.gen_ttf_btn)
         self.load_font_btn = QPushButton('Load Fonts')
         self.load_font_btn.clicked.connect(self.load_fonts)
         hb_buttons.addWidget(self.load_font_btn)
-        hb_buttons.addStretch()
+        self.prog_bar = QProgressBar()
+        self.prog_bar.setRange(0,100)
+        hb_buttons.addWidget(self.prog_bar)
         win_layout.addLayout(hb_buttons)
 
+        # Output Log #
         gb_log_win = QGroupBox('Log Window')
-        gb_log_win.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_log_win.setStyleSheet(gb_style)
         vb_log = QVBoxLayout()
+        out_font = QFont('Courier')
+        out_font.setStyleHint(QFont.Monospace)
         self.log_win = QTextEdit()
         self.log_win.setAcceptRichText(False)
+        self.log_win.setFont(out_font)
         vb_log.addWidget(self.log_win)
         gb_log_win.setLayout(vb_log)
         win_layout.addWidget(gb_log_win)
+
+        # Toolbar #
 
         # Show Window #
         self.setCentralWidget(QWidget(self))
@@ -159,6 +181,17 @@ class RF_Qt(QMainWindow):
         self.setWindowTitle('Readify Font')
 
         self.show()
+
+        self.ff_path = helper.which('fontforge')
+        if not self.ff_path:
+            self.set_ff_path()
+
+    def set_ff_path(self):
+        QMessageBox.warning(self, 'Fontforge Missing!', 'FontForge is not in your PATH! If it is installed, '
+                                                      'please locate it now.', QMessageBox.Ok, QMessageBox.Ok)
+        path = QFileDialog.getOpenFileName(self, 'Locate FontForge...')
+        if path[0]:
+            self.ff_path = os.path.normpath(path[0])
 
     def set_basic_opt(self):
         opt = self.sender()
@@ -216,61 +249,84 @@ class RF_Qt(QMainWindow):
 
     def load_fonts(self):
         f_f = QFileDialog.getOpenFileNames(self, 'Load Fonts', '', 'Font Files (*.ttf, *.otf)')
-        self.font_files = f_f[0]
-        f_f_names = []
-        for file in self.font_files:
-            file = os.path.normpath(file)
-            base, fn = os.path.split(file)
-            f_f_names.append(fn)
+        if f_f[0]:
+            for f_label, f_style in zip(self.fnt_file_name_list, self.fnt_sty_combo_list):
+                f_label.setText('Load font file...')
+                f_style.setCurrentIndex(SEL_NONE)
+                f_style.setEnabled(False)
 
-        for f_file, f_label, f_style in zip(f_f_names, self.fnt_file_name_list, self.fnt_sty_combo_list):
-            f_label.setText(f_file)
-            f_style.setEnabled(True)
-            if 'regular' in f_file.lower():
-                f_style.setCurrentIndex(SEL_REGULAR)
-            elif 'bold' in f_file.lower() and 'italic' in f_file.lower():
-                f_style.setCurrentIndex(SEL_BOLDITALIC)
-            elif 'bold' in f_file.lower():
-                f_style.setCurrentIndex(SEL_BOLD)
-            elif 'italic' in f_file.lower():
-                f_style.setCurrentIndex(SEL_ITALIC)
+            self.font_files = f_f[0]
+            f_f_names = []
+            for file in self.font_files:
+                file = os.path.normpath(file)
+                base, fn = os.path.split(file)
+                f_f_names.append(fn)
 
-    # The following method was adapted from: http://stackoverflow.com/a/22110924
+            for f_file, f_label, f_style in zip(f_f_names, self.fnt_file_name_list, self.fnt_sty_combo_list):
+                f_label.setText(f_file)
+                f_style.setEnabled(True)
+                if 'regular' in f_file.lower():
+                    f_style.setCurrentIndex(SEL_REGULAR)
+                elif 'bold' in f_file.lower() and 'italic' in f_file.lower():
+                    f_style.setCurrentIndex(SEL_BOLDITALIC)
+                elif 'bold' in f_file.lower():
+                    f_style.setCurrentIndex(SEL_BOLD)
+                elif 'italic' in f_file.lower():
+                    f_style.setCurrentIndex(SEL_ITALIC)
+
     def dataReady(self):
         output = str(self.cli_process.readAllStandardOutput(), encoding=sys.getdefaultencoding())
         self.log_win.append(output)
+
+    def manage_proc(self):
+        proc = self.sender()
+        if proc.state() == QProcess.Running:
+            self.prog_bar.setRange(0,0)
+        if proc.state() == QProcess.NotRunning:
+            self.prog_bar.setRange(0,100)
+            self.prog_bar.setValue(100)
 
     def enable_ttf(self):
         pass
 
     def gen_ttf(self):
-        if not self.font_info.out_dir:
-            save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select save directory...'))
-            if save_dir:
-                self.font_info.out_dir = save_dir
-        else:
-            save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select Save directory...',
-                                                                         self.font_info.out_dir))
-            if save_dir:
-                self.font_info.out_dir = save_dir
+        if not self.ff_path:
+            self.set_ff_path()
+        if self.ff_path:
+            if not self.font_info.out_dir:
+                save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select save directory...',
+                                                                             options=QFileDialog.ShowDirsOnly))
+                if save_dir == '.' or save_dir == '':
+                    return
+                else:
+                    self.font_info.out_dir = save_dir
+            else:
+                save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select Save directory...',
+                                                                             self.font_info.out_dir,
+                                                                             options=QFileDialog.ShowDirsOnly))
+                if save_dir == '.' or save_dir == '':
+                    return
+                else:
+                    self.font_info.out_dir = save_dir
 
-        for file, style in zip(self.font_files, self.fnt_sty_combo_list):
-            if style.currentIndex() == SEL_REGULAR:
-                self.font_info.font_file_reg = file
-            elif style.currentIndex() == SEL_BOLDITALIC:
-                self.font_info.font_file_bi = file
-            elif style.currentIndex() == SEL_BOLD:
-                self.font_info.font_file_bd = file
-            elif style.currentIndex() == SEL_ITALIC:
-                self.font_info.font_file_it = file
+            for file, style in zip(self.font_files, self.fnt_sty_combo_list):
+                if style.currentIndex() == SEL_REGULAR:
+                    self.font_info.font_file_reg = file
+                elif style.currentIndex() == SEL_BOLDITALIC:
+                    self.font_info.font_file_bi = file
+                elif style.currentIndex() == SEL_BOLD:
+                    self.font_info.font_file_bd = file
+                elif style.currentIndex() == SEL_ITALIC:
+                    self.font_info.font_file_it = file
 
-        cli_opt_list = self.font_info.gen_cli_command()
-        print(cli_opt_list)
-        self.cli_process.start('fontforge', cli_opt_list)
+            cli_opt_list = self.font_info.gen_cli_command()
+            self.cli_process.start(self.ff_path, cli_opt_list)
+
 
 def main():
     app = QApplication(sys.argv)
     rf = RF_Qt()
     sys.exit(app.exec_())
+
 if __name__ == '__main__':
     main()
