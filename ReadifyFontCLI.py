@@ -201,6 +201,11 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
 
     f.save(newFontFile)
     f.close()
+
+    try:
+        os.remove(newFontFile)
+    except:
+        print('There was an error removing the file!')
     """
     This is an ugly workaround to the font renaming issue some fonts seem to have
     One day, I hope to find a proper fix, or a more elegent workaround

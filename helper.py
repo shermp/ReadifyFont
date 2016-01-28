@@ -27,7 +27,17 @@ def calc_grid_pos(pos, cols):
 
     return calc_row, calc_col
 
-
+def valid_filename(name):
+    """
+    A basic check for invalid characters in filenames.
+    :param name:
+    :return:
+    """
+    invalid_char = '\/:*?"<>|'
+    if any(char in name for char in invalid_char):
+        return False
+    else:
+        return True
 '''
 NOTE: The following function has been copied from https://hg.python.org/cpython/file/default/Lib/shutil.py
 

@@ -150,6 +150,7 @@ class RF_Qt(QMainWindow):
         hb_buttons = QHBoxLayout()
         #hb_buttons.addStretch()
         self.gen_ttf_btn = QPushButton('Generate TTF')
+        self.gen_ttf_btn.setEnabled(False)
         self.gen_ttf_btn.clicked.connect(self.gen_ttf)
         hb_buttons.addWidget(self.gen_ttf_btn)
         self.load_font_btn = QPushButton('Load Fonts')
@@ -211,7 +212,15 @@ class RF_Qt(QMainWindow):
                 self.font_info.name_hack = False
 
     def set_family_name(self, name):
-        self.font_info.font_name = name
+        if name:
+            if helper.valid_filename(name):
+                self.font_info.font_name = name
+                if self.font_files:
+                    self.gen_ttf_btn.setEnabled(True)
+            else:
+                self.gen_ttf_btn.setEnabled(False)
+        else:
+            self.gen_ttf_btn.setEnabled(False)
 
     def set_darken_amount(self, amount):
         self.darken_amount_lab.setText(str(amount))
@@ -286,7 +295,7 @@ class RF_Qt(QMainWindow):
             self.prog_bar.setRange(0,100)
             self.prog_bar.setValue(100)
 
-    def enable_ttf(self):
+    def check_valid(self):
         pass
 
     def gen_ttf(self):
