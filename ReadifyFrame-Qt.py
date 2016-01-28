@@ -44,6 +44,8 @@ class RF_Qt(QMainWindow):
             cmb.addItem('')
             cmb.addItems(self.fnt_styles)
             cmb.setEnabled(False)
+            cmb.setToolTip('<qt/>If not automatically detected when the font is added, allows you to select what font '
+                           'sub-family the font file belongs to')
             self.fnt_sty_combo_list.append(cmb)
             row, col = helper.calc_grid_pos(grid_pos, 2)
             grid_f_f.addWidget(self.fnt_file_name_list[i], row, col)
@@ -94,8 +96,16 @@ class RF_Qt(QMainWindow):
         gb_hint_opt.setStyleSheet(gb_style)
         hb_hint_opt = QHBoxLayout()
         self.hint_opt_list = []
-        for opt in ('Keep Existing', 'Remove Existing', 'AutoHint'):
+        hint_tooltips = ('<qt/>Keep font hinting as it exists in the orginal font files.<br />'
+                         'In most cases, this will look fine on most ebook reading devices.',
+                         '<qt/>Some fonts are manually, or "hand" hinted for specific display types (such as LCD). '
+                         'These fonts may not look good on other display types such as e-ink, therefore they can be '
+                         'removed.',
+                         '<qt/>If you don\'t like the original hinting, but you want your font to be hinted, '
+                         'this option will auto hint your font.')
+        for opt, tip in zip(('Keep Existing', 'Remove Existing', 'AutoHint'), hint_tooltips):
             self.hint_opt_list.append(QRadioButton(opt))
+            self.hint_opt_list[-1].setToolTip(tip)
             self.hint_opt_list[-1].toggled.connect(self.set_hint)
             hb_hint_opt.addWidget(self.hint_opt_list[-1])
 
@@ -130,6 +140,9 @@ class RF_Qt(QMainWindow):
         self.darken_amount_opt.setMaximum(50)
         self.darken_amount_opt.setValue(12)
         self.darken_amount_opt.setEnabled(False)
+        self.darken_amount_opt.setToolTip('<qt/>Set the amount to darken a font by. 50 is considered turning a '
+                                          'regular weight font into a bold weight font. It is not recommended to '
+                                          'darken a font that much however.')
         self.darken_amount_opt.valueChanged[int].connect(self.set_darken_amount)
         hb_dark_opt.addWidget(self.darken_amount_opt)
         self.darken_amount_lab = QLabel()
@@ -151,9 +164,13 @@ class RF_Qt(QMainWindow):
         #hb_buttons.addStretch()
         self.gen_ttf_btn = QPushButton('Generate TTF')
         self.gen_ttf_btn.setEnabled(False)
+        self.gen_ttf_btn.setToolTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
+                                    '<br /><br />'
+                                    'The new fonts are saved in a directory of your choosing.')
         self.gen_ttf_btn.clicked.connect(self.gen_ttf)
         hb_buttons.addWidget(self.gen_ttf_btn)
         self.load_font_btn = QPushButton('Load Fonts')
+        self.load_font_btn.setToolTip('<qt/>Load font files to modify.')
         self.load_font_btn.clicked.connect(self.load_fonts)
         hb_buttons.addWidget(self.load_font_btn)
         self.prog_bar = QProgressBar()
@@ -282,6 +299,9 @@ class RF_Qt(QMainWindow):
                     f_style.setCurrentIndex(SEL_BOLD)
                 elif 'italic' in f_file.lower():
                     f_style.setCurrentIndex(SEL_ITALIC)
+
+            if self.new_fnt_name.text():
+                self.gen_ttf_btn.setEnabled(True)
 
     def dataReady(self):
         output = str(self.cli_process.readAllStandardOutput(), encoding=sys.getdefaultencoding())
