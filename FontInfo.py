@@ -2,6 +2,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 
 class FontInfo():
+    """
+    Create an object to store various font modification options, and generate a list of command line options to be be
+    passed into the CLI script
+    """
     def __init__(self):
         self.font_name = ''
         self.font_file_reg = ''
@@ -19,6 +23,10 @@ class FontInfo():
         self.prev_dir = ''
 
     def gen_cli_command(self):
+        """
+        Generate all options for the CLI script.
+        :return:
+        """
         cli_command = ['-script', 'ReadifyFontCLI.py']
         if self.font_file_reg:
             cli_command.append('-r')

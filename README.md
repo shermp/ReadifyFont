@@ -12,7 +12,7 @@ common tasks quickly and easily.
 The script can do the following:
 
 - Rename the font
-- Strip hints from font files
+- Modify hints from font files
 - Enable 'legacy', or 'old style' kerning
 - Remove PANOSE information
 - Add weight to font files
@@ -22,7 +22,7 @@ The script can do the following:
 Included is a simple GUI wrapper to the script that allows you to choose font files, set options, and generates new
 font files.
 
-It is built using PyQt.
+It is built using PyQt5 or wxPython 3.0.3.
 
 ## CLI
 
@@ -34,3 +34,9 @@ For help, invoke
 
 `fontforge -script ReadifyFontCLI.py -h`
 
+## REQUIREMENTS
+
+A modern version of FontForge. Versions from August 2015 and later have been tested. Note that many linux
+distributions (I'm looking at you Ubuntu...) ship an ancient version of FontForge in their repositories.
+
+For the Qt GUI, PyQt5 is required.

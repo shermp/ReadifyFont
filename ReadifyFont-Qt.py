@@ -40,22 +40,26 @@ class RF_Qt(QMainWindow):
         self.fnt_file_name_list = []
         self.font_files = None
         self.font_info = FontInfo()
-        # Create a QProcess
+        # Create a QProcess object, and connect it to appropriate slots
         self.cli_process = QProcess(self)
         self.cli_process.setProcessChannelMode(QProcess.MergedChannels)
-        self.cli_process.readyRead.connect(self.dataReady)
+        self.cli_process.readyRead.connect(self.read_proc_output)
         self.cli_process.started.connect(self.manage_proc)
         self.cli_process.finished.connect(self.manage_proc)
         self.cli_process.error.connect(self.manage_proc)
 
+        # Style for all groupbox labels
         gb_style = 'QGroupBox { font-weight: bold; }'
+        # Top level layout manager for the window.
         win_layout = QVBoxLayout()
         gb_fnt_files = QGroupBox('Font Files')
-        gb_fnt_files.setStyleSheet('QGroupBox { font-weight: bold; }')
+        gb_fnt_files.setStyleSheet(gb_style)
         grid_f_f = QGridLayout()
         grid_pos = 0
 
         # Font Files and styles #
+
+        # Create a grid of font names with their respective font style combo boxes
         for i in range(len(self.fnt_styles)):
             self.fnt_file_name_list.append(QLabel('Load font file...'))
             cmb = QComboBox()
@@ -234,8 +238,6 @@ class RF_Qt(QMainWindow):
         gb_log_win.setLayout(vb_log)
         win_layout.addWidget(gb_log_win)
 
-        # Toolbar #
-
         # Show Window #
         self.setCentralWidget(QWidget(self))
         self.centralWidget().setLayout(win_layout)
@@ -243,11 +245,16 @@ class RF_Qt(QMainWindow):
 
         self.show()
 
+        # Check if fontforge is actually in users PATH. If it isn't, prompt user to provice a location
         self.ff_path = helper.which('fontforge')
         if not self.ff_path:
             self.set_ff_path()
 
     def set_ff_path(self):
+        """
+        Let user choose location of fontforge
+        :return:
+        """
         QMessageBox.warning(self, 'Fontforge Missing!', 'FontForge is not in your PATH! If it is installed, '
                                                       'please locate it now.', QMessageBox.Ok, QMessageBox.Ok)
         path = QFileDialog.getOpenFileName(self, 'Locate FontForge...')
@@ -255,6 +262,10 @@ class RF_Qt(QMainWindow):
             self.ff_path = os.path.normpath(path[0])
 
     def set_basic_opt(self):
+        """
+        Handler to set basic options
+        :return:
+        """
         opt = self.sender()
         if opt.isChecked():
             if 'kerning' in opt.text().lower():
@@ -272,6 +283,11 @@ class RF_Qt(QMainWindow):
                 self.font_info.name_hack = False
 
     def set_family_name(self, name):
+        """
+        Handler to set name option. Also checks if buttons need enabling
+        :param name:
+        :return:
+        """
         if name:
             if helper.valid_filename(name):
                 self.font_info.font_name = name
@@ -286,10 +302,19 @@ class RF_Qt(QMainWindow):
             self.gen_prev_btn.setEnabled(False)
 
     def set_darken_amount(self, amount):
+        """
+        Set Darken amount slider
+        :param amount:
+        :return:
+        """
         self.darken_amount_lab.setText(str(amount))
         self.font_info.add_weight = amount
 
     def set_hint(self):
+        """
+        Set hint options
+        :return:
+        """
         hint = self.sender()
         if hint.isChecked():
             if 'keep' in hint.text().lower():
@@ -300,6 +325,10 @@ class RF_Qt(QMainWindow):
                 self.font_info.change_hint = 'auto'
 
     def set_darken_opt(self):
+        """
+        Set darken options
+        :return:
+        """
         if self.sender().isChecked():
             self.mod_bearing_opt.setEnabled(True)
             self.lbl.setEnabled(True)
@@ -314,12 +343,20 @@ class RF_Qt(QMainWindow):
             self.set_darken_amount(0)
 
     def set_mod_bearing(self):
+        """
+        Set mod bearing options
+        :return:
+        """
         if self.mod_bearing_opt.isChecked():
             self.font_info.mod_bearings = True
         else:
             self.font_info.mod_bearings = False
 
     def load_fonts(self):
+        """
+        Load fonts from a directory, and sets appropriate options
+        :return:
+        """
         f_f = QFileDialog.getOpenFileNames(self, 'Load Fonts', '', 'Font Files (*.ttf, *.otf)')
         if f_f[0]:
             for f_label, f_style in zip(self.fnt_file_name_list, self.fnt_sty_combo_list):
@@ -350,11 +387,22 @@ class RF_Qt(QMainWindow):
                 self.gen_ttf_btn.setEnabled(True)
                 self.gen_prev_btn.setEnabled(True)
 
-    def dataReady(self):
-        output = str(self.cli_process.readAllStandardOutput(), encoding=sys.getdefaultencoding())
+    def read_proc_output(self):
+        """
+        Read any stdout data available from the process and displays it in the output log window.
+        :return:
+        """
+        if sys.version_info.major == 2:
+            output = unicode(self.cli_process.readAllStandardOutput(), encoding=sys.getdefaultencoding())
+        else:
+            output = str(self.cli_process.readAllStandardOutput(), encoding=sys.getdefaultencoding())
         self.log_win.append(output)
 
     def manage_proc(self):
+        """
+        Manage the progress bar
+        :return:
+        """
         proc = self.sender()
         if proc.state() == QProcess.Running:
             self.prog_bar.setRange(0,0)
@@ -363,6 +411,14 @@ class RF_Qt(QMainWindow):
             self.prog_bar.setValue(100)
 
     def gen_prev(self):
+        """
+        Generate a preview to show the user how their modifications will look.
+
+        This feature is definitely still buggy. Qt is very fussy about its fonts....
+        :return:
+        """
+        self.log_win.clear()
+        # If a preview has previously been generated, remove the fonts from the font db
         if self.font_indices:
             for index in self.font_indices:
                 self.fontdb.removeApplicationFont(index)
@@ -391,6 +447,12 @@ class RF_Qt(QMainWindow):
         self.prev_ita.setFont(QFont('rf-prev'))
 
     def gen_ttf(self, prev=False):
+        """
+        Generate modified TrueType font files, by calling the CLI script with the appropriate arguments.
+        :param prev:
+        :return:
+        """
+        self.log_win.clear()
         if not self.ff_path:
             self.set_ff_path()
         if self.ff_path:
@@ -429,6 +491,11 @@ class RF_Qt(QMainWindow):
             self.cli_process.start(self.ff_path, cli_opt_list)
 
     def closeEvent(self, event):
+        """
+        Cleaning up...
+        :param event:
+        :return:
+        """
         shutil.rmtree(self.font_info.prev_dir, ignore_errors=True)
         self.cli_process.close()
         event.accept()

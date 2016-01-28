@@ -41,7 +41,7 @@ def valid_filename(name):
 '''
 NOTE: The following function has been copied from https://hg.python.org/cpython/file/default/Lib/shutil.py
 
-I am including it here because it is not included in python versions < 3.3.
+I am including it here because the functionality is not included in python versions < 3.3.
 '''
 def which(cmd, mode=os.F_OK | os.X_OK, path=None):
     """Given a command, mode, and a PATH string, return the path which
