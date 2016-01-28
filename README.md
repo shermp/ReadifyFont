@@ -24,6 +24,8 @@ font files.
 
 It is built using PyQt5 or wxPython 3.0.3.
 
+To run the GUI's run either 'ReadifyFont-Qt.py' or 'ReadifyFont-Wx.py'
+
 ## CLI
 
 Assuming FontForge is in your system PATH, the script can be invoked like so:
