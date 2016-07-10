@@ -357,7 +357,7 @@ class RF_Qt(QMainWindow):
         Load fonts from a directory, and sets appropriate options
         :return:
         """
-        f_f = QFileDialog.getOpenFileNames(self, 'Load Fonts', '', 'Font Files (*.ttf, *.otf)')
+        f_f = QFileDialog.getOpenFileNames(self, 'Load Fonts', '', 'Font Files (*.ttf *.otf)')
         if f_f[0]:
             for f_label, f_style in zip(self.fnt_file_name_list, self.fnt_sty_combo_list):
                 f_label.setText('Load font file...')
