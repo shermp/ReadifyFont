@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGroupBox, QGridLayout, \
     QLineEdit, QCheckBox, QComboBox, QRadioButton, QSlider, QLabel, QPushButton, QFileDialog, QTextEdit, \
-    QProgressBar, QMessageBox
+    QProgressBar, QMessageBox, QAction
 from PyQt5.QtCore import Qt, QProcess, QDir
 from PyQt5.QtGui import QFont, QFontDatabase
 from FontInfo import FontInfo
@@ -206,24 +206,45 @@ class RF_Qt(QMainWindow):
         gb_preview.setLayout(vb_prev)
         win_layout.addWidget(gb_preview)
 
-        # Buttons #
-        hb_buttons = QHBoxLayout()
-        #hb_buttons.addStretch()
-        self.gen_ttf_btn = QPushButton('Generate TTF')
-        self.gen_ttf_btn.setEnabled(False)
-        self.gen_ttf_btn.setToolTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
-                                    '<br /><br />'
-                                    'The new fonts are saved in a directory of your choosing.')
-        self.gen_ttf_btn.clicked.connect(self.gen_ttf)
-        hb_buttons.addWidget(self.gen_ttf_btn)
-        self.load_font_btn = QPushButton('Load Fonts')
-        self.load_font_btn.setToolTip('<qt/>Load font files to modify.')
-        self.load_font_btn.clicked.connect(self.load_fonts)
-        hb_buttons.addWidget(self.load_font_btn)
-        self.prog_bar = QProgressBar()
-        self.prog_bar.setRange(0,100)
-        hb_buttons.addWidget(self.prog_bar)
-        win_layout.addLayout(hb_buttons)
+        # # Buttons #
+        # hb_buttons = QHBoxLayout()
+        # #hb_buttons.addStretch()
+        # self.gen_ttf_btn = QPushButton('Generate TTF')
+        # self.gen_ttf_btn.setEnabled(False)
+        # self.gen_ttf_btn.setToolTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
+        #                             '<br /><br />'
+        #                             'The new fonts are saved in a directory of your choosing.')
+        # self.gen_ttf_btn.clicked.connect(self.gen_ttf)
+        # hb_buttons.addWidget(self.gen_ttf_btn)
+        # self.load_font_btn = QPushButton('Load Fonts')
+        # self.load_font_btn.setToolTip('<qt/>Load font files to modify.')
+        # self.load_font_btn.clicked.connect(self.load_fonts)
+        # hb_buttons.addWidget(self.load_font_btn)
+        # win_layout.addLayout(hb_buttons)
+
+        # Menu Bar #
+        self.load_font_action = QAction('&Load Font Files', self)
+        self.load_font_action.setStatusTip('<qt/>Load font files to modify.')
+        self.load_font_action.setShortcut('Ctrl+L')
+        self.load_font_action.triggered.connect(self.load_fonts)
+
+        self.gen_ttf_action = QAction('&Generate TTF', self)
+        self.gen_ttf_action.setStatusTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
+                                     '<br /><br />'
+                                     'The new fonts are saved in a directory of your choosing.')
+        self.gen_ttf_action.setShortcut('Ctrl+G')
+        self.gen_ttf_action.triggered.connect(self.gen_ttf)
+
+        menu = self.menuBar()
+        file_menu = menu.addMenu('&File')
+        file_menu.addAction(self.load_font_action)
+        gen_menu = menu.addMenu('&Generate')
+        gen_menu.addAction(self.gen_ttf_action)
+
+        # Status Bar #
+        #self.prog_bar = QProgressBar()
+        #self.prog_bar.setRange(0,100)
+        self.statusBar().showMessage("Ready")
 
         # Output Log #
         gb_log_win = QGroupBox('Log Window')
@@ -292,13 +313,13 @@ class RF_Qt(QMainWindow):
             if helper.valid_filename(name):
                 self.font_info.font_name = name
                 if self.font_files:
-                    self.gen_ttf_btn.setEnabled(True)
+                    self.gen_ttf_action.setEnabled(True)
                     self.gen_prev_btn.setEnabled(True)
             else:
-                self.gen_ttf_btn.setEnabled(False)
+                self.gen_ttf_action.setEnabled(False)
                 self.gen_prev_btn.setEnabled(False)
         else:
-            self.gen_ttf_btn.setEnabled(False)
+            self.gen_ttf_action.setEnabled(False)
             self.gen_prev_btn.setEnabled(False)
 
     def set_darken_amount(self, amount):
@@ -405,10 +426,12 @@ class RF_Qt(QMainWindow):
         """
         proc = self.sender()
         if proc.state() == QProcess.Running:
-            self.prog_bar.setRange(0,0)
+            #self.prog_bar.setRange(0,0)
+            self.statusBar().showMessage("Working. Please wait...")
         if proc.state() == QProcess.NotRunning:
-            self.prog_bar.setRange(0,100)
-            self.prog_bar.setValue(100)
+            #self.prog_bar.setRange(0,100)
+            #self.prog_bar.setValue(100)
+            self.statusBar().showMessage("Finished!")
 
     def gen_prev(self):
         """
