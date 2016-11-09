@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGroupBox, QGridLayout, \
     QLineEdit, QCheckBox, QComboBox, QRadioButton, QSlider, QLabel, QPushButton, QFileDialog, QTextEdit, \
-    QProgressBar, QMessageBox
+    QProgressBar, QMessageBox, QDialog
 from PyQt5.QtCore import Qt, QProcess, QDir
 from PyQt5.QtGui import QFont, QFontDatabase
 from FontInfo import FontInfo
@@ -39,6 +39,7 @@ class RF_Qt(QMainWindow):
         self.fnt_file_name_list = []
         self.font_files = None
         self.font_info = FontInfo()
+        self.result_dia = QDialog(self)
         # Create a QProcess object, and connect it to appropriate slots
         self.cli_process = QProcess(self)
         self.cli_process.setProcessChannelMode(QProcess.MergedChannels)
@@ -51,6 +52,23 @@ class RF_Qt(QMainWindow):
         gb_style = 'QGroupBox { font-weight: bold; }'
         # Top level layout manager for the window.
         win_layout = QVBoxLayout()
+
+        # Buttons #
+        hb_buttons = QHBoxLayout()
+        # hb_buttons.addStretch()
+        self.load_font_btn = QPushButton('Open Fonts')
+        self.load_font_btn.setToolTip('<qt/>Load font files to modify.')
+        self.load_font_btn.clicked.connect(self.load_fonts)
+        hb_buttons.addWidget(self.load_font_btn)
+        self.gen_ttf_btn = QPushButton('Generate TTF')
+        self.gen_ttf_btn.setEnabled(False)
+        self.gen_ttf_btn.setToolTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
+                                    '<br /><br />'
+                                    'The new fonts are saved in a directory of your choosing.')
+        self.gen_ttf_btn.clicked.connect(self.gen_ttf)
+        hb_buttons.addWidget(self.gen_ttf_btn)
+        win_layout.addLayout(hb_buttons)
+
         gb_fnt_files = QGroupBox('Font Files')
         gb_fnt_files.setStyleSheet(gb_style)
         grid_f_f = QGridLayout()
@@ -174,24 +192,19 @@ class RF_Qt(QMainWindow):
 
         win_layout.addWidget(gb_dark_opt)
 
-        # Buttons #
-        hb_buttons = QHBoxLayout()
-        #hb_buttons.addStretch()
-        self.gen_ttf_btn = QPushButton('Generate TTF')
-        self.gen_ttf_btn.setEnabled(False)
-        self.gen_ttf_btn.setToolTip('<qt/>Generate a new TrueType font based on the options chosen in this program. '
-                                    '<br /><br />'
-                                    'The new fonts are saved in a directory of your choosing.')
-        self.gen_ttf_btn.clicked.connect(self.gen_ttf)
-        hb_buttons.addWidget(self.gen_ttf_btn)
-        self.load_font_btn = QPushButton('Load Fonts')
-        self.load_font_btn.setToolTip('<qt/>Load font files to modify.')
-        self.load_font_btn.clicked.connect(self.load_fonts)
-        hb_buttons.addWidget(self.load_font_btn)
+
+        # Result Dialog #
+        vb_res_dia_layout = QVBoxLayout()
+
+        # Progress Bar #
+        gb_prog = QGroupBox('Progress')
+        gb_prog.setStyleSheet(gb_style)
+        vb_prog = QVBoxLayout()
         self.prog_bar = QProgressBar()
-        self.prog_bar.setRange(0,100)
-        hb_buttons.addWidget(self.prog_bar)
-        win_layout.addLayout(hb_buttons)
+        self.prog_bar.setRange(0, 100)
+        vb_prog.addWidget(self.prog_bar)
+        gb_prog.setLayout(vb_prog)
+        vb_res_dia_layout.addWidget(gb_prog)
 
         # Output Log #
         gb_log_win = QGroupBox('Log Window')
@@ -204,7 +217,14 @@ class RF_Qt(QMainWindow):
         self.log_win.setFont(out_font)
         vb_log.addWidget(self.log_win)
         gb_log_win.setLayout(vb_log)
-        win_layout.addWidget(gb_log_win)
+        vb_res_dia_layout.addWidget(gb_log_win)
+        hb_res_btn = QHBoxLayout()
+        self.res_close_btn = QPushButton('Close')
+        self.res_close_btn.clicked.connect(self.result_dia.done)
+        self.res_close_btn.setEnabled(False)
+        hb_res_btn.addWidget(self.res_close_btn)
+        vb_res_dia_layout.addLayout(hb_res_btn)
+        self.result_dia.setLayout(vb_res_dia_layout)
 
         # Show Window #
         self.setCentralWidget(QWidget(self))
@@ -373,6 +393,7 @@ class RF_Qt(QMainWindow):
         if proc.state() == QProcess.NotRunning:
             self.prog_bar.setRange(0,100)
             self.prog_bar.setValue(100)
+            self.res_close_btn.setEnabled(True)
 
     def gen_ttf(self):
         """
@@ -412,6 +433,7 @@ class RF_Qt(QMainWindow):
 
             cli_opt_list = self.font_info.gen_cli_command()
             self.cli_process.start(self.ff_path, cli_opt_list)
+            self.result_dia.exec()
 
     def closeEvent(self, event):
         """
