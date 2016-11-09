@@ -138,39 +138,13 @@ def getCodePointList(prevText):
     return ordList
 
 def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
-            nameHack, preview):
+            nameHack):
     # Open font file and immediately save as a fontforge file
     f = fontforge.open(fontFile.strip())
-    tempOrigName = 'rf-orig'
     newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
     newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
-    tempOrigTTF = os.path.normpath(outDir+"/"+tempOrigName+"-"+style+".ttf")
-    if preview:
-        cpList = getCodePointList(preview)
-        if cpList:
-            for cp in cpList:
-                f.selection.select((tEnc("more"), None), cp)
-        else:
-             f.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
-        f.copy()
 
-        n = fontforge.font()
-        if cpList:
-            for cp in cpList:
-                n.selection.select((tEnc("more"), None), cp)
-        else:
-            n.selection.select((tEnc("ranges"), None), tEnc("A"),tEnc("z"))
-        n.paste()
-
-        n.fontname=newFamilyName
-        n.save(newFontFile)
-
-        setNames(n, tempOrigName, style)
-        n.os2_panose = (0,0,0,0,0,0,0,0,0,0)
-        nFlags = generateFlags(None, None)
-        n.generate(tempOrigTTF, flags=nFlags)
-    else:
-        f.save(newFontFile)
+    f.save(newFontFile)
     f.close()
 
     # Open new fontforge file
@@ -244,14 +218,6 @@ def main():
                         Only use it for subtle weight changes", action="store_true")
     parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
                         try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
-    parser.add_argument("-P", "--previewfont", help="If specified, a preview font file will be generated in the "
-                                                  "directory "
-                                              "set by \"--previewdirectory\".\nAt least one of regular or italic font "
-                                              "files should be added. The default preview order is \"regular\", "
-                                              "\"italic\"")
-    parser.add_argument("-D", "--previewdirectory", help="The directory to store the preview font. If this is omitted, "
-                                                   "no preview will be generated.")
-#    parser.add_argument("-T", "--previewtext", help="Characters that will be used for font preview")
 
     args = parser.parse_args()
 
@@ -291,26 +257,11 @@ def main():
     legacyKern = args.legacykern
     addWeight = args.addweight
 
-    if args.previewfont and args.previewdirectory and (fontDic[FNT_REGULAR] or fontDic[FNT_ITALIC]):
-        prevOutDir = args.previewdirectory.strip()
-        prevFamilyName = "rf-prev"
-        if fontDic[FNT_REGULAR]:
-            prevFontFile = fontDic[FNT_REGULAR]
-            prevStyle = FNT_REGULAR
-            modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
-                    args.panosestrip, args.modifybearings, args.namehack, preview=args.previewfont.strip())
-        if fontDic[FNT_ITALIC]:
-            prevFontFile = fontDic[FNT_ITALIC]
-            prevStyle = FNT_ITALIC
-            modFont(prevFontFile, prevStyle, prevOutDir, prevFamilyName, changeHints, legacyKern, addWeight,
-                    args.panosestrip, args.modifybearings, args.namehack, preview=args.previewfont.strip())
-
-    else:
-        for style, fontFile in iterDic(fontDic, PYTHON_TWO):
-            # Check if a font has been added before proceeding
-            if fontFile:
-                modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
-                        args.modifybearings, args.namehack, preview=None)
+    for style, fontFile in iterDic(fontDic, PYTHON_TWO):
+        # Check if a font has been added before proceeding
+        if fontFile:
+            modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
+                    args.modifybearings, args.namehack)
 
 if __name__ == "__main__":
     main()

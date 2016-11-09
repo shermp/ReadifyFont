@@ -12,7 +12,6 @@ from FontInfo import FontInfo
 import os
 import sys
 import helper
-import tempfile
 import shutil
 
 SEL_REGULAR = 1
@@ -175,37 +174,6 @@ class RF_Qt(QMainWindow):
 
         win_layout.addWidget(gb_dark_opt)
 
-        # Preview #
-        self.fontdb = QFontDatabase()
-        self.font_indices = []
-        gb_preview = QGroupBox('Preview Font')
-        gb_preview.setStyleSheet(gb_style)
-        vb_prev = QVBoxLayout()
-        hb_prev_entry = QHBoxLayout()
-        self.prev_text_entry = QLineEdit()
-        self.gen_prev_btn = QPushButton('Preview Font')
-        self.gen_prev_btn.setEnabled(False)
-        self.gen_prev_btn.clicked.connect(self.gen_prev)
-        hb_prev_entry.addWidget(self.prev_text_entry)
-        hb_prev_entry.addWidget(self.gen_prev_btn)
-        vb_prev.addLayout(hb_prev_entry)
-        grid_prev_display = QGridLayout()
-        orig_prev_lab = QLabel('<b>Original Font:</b>')
-        grid_prev_display.addWidget(orig_prev_lab, 0, 0)
-        mod_prev_lab = QLabel('<b>Modified Font:</b>')
-        grid_prev_display.addWidget(mod_prev_lab, 0, 1)
-        self.prev_orig_reg = QLabel()
-        grid_prev_display.addWidget(self.prev_orig_reg, 1, 0)
-        self.prev_orig_ita = QLabel()
-        grid_prev_display.addWidget(self.prev_orig_ita, 2, 0)
-        self.prev_reg = QLabel()
-        grid_prev_display.addWidget(self.prev_reg, 1, 1)
-        self.prev_ita = QLabel()
-        grid_prev_display.addWidget(self.prev_ita, 2, 1)
-        vb_prev.addLayout(grid_prev_display)
-        gb_preview.setLayout(vb_prev)
-        win_layout.addWidget(gb_preview)
-
         # Buttons #
         hb_buttons = QHBoxLayout()
         #hb_buttons.addStretch()
@@ -293,13 +261,10 @@ class RF_Qt(QMainWindow):
                 self.font_info.font_name = name
                 if self.font_files:
                     self.gen_ttf_btn.setEnabled(True)
-                    self.gen_prev_btn.setEnabled(True)
             else:
                 self.gen_ttf_btn.setEnabled(False)
-                self.gen_prev_btn.setEnabled(False)
         else:
             self.gen_ttf_btn.setEnabled(False)
-            self.gen_prev_btn.setEnabled(False)
 
     def set_darken_amount(self, amount):
         """
@@ -385,7 +350,6 @@ class RF_Qt(QMainWindow):
 
             if self.new_fnt_name.text():
                 self.gen_ttf_btn.setEnabled(True)
-                self.gen_prev_btn.setEnabled(True)
 
     def read_proc_output(self):
         """
@@ -410,43 +374,7 @@ class RF_Qt(QMainWindow):
             self.prog_bar.setRange(0,100)
             self.prog_bar.setValue(100)
 
-    def gen_prev(self):
-        """
-        Generate a preview to show the user how their modifications will look.
-
-        This feature is definitely still buggy. Qt is very fussy about its fonts....
-        :return:
-        """
-        self.log_win.clear()
-        # If a preview has previously been generated, remove the fonts from the font db
-        if self.font_indices:
-            for index in self.font_indices:
-                self.fontdb.removeApplicationFont(index)
-        prev_text = self.prev_text_entry.text()
-        self.font_info.prev_font = prev_text
-        prev_text_ita = '<i>' + prev_text + '</i>'
-        if self.font_info.prev_dir:
-            shutil.rmtree(self.font_info.prev_dir, ignore_errors=True)
-            self.font_info.prev_dir = ''
-
-        self.font_info.prev_dir = os.path.normpath(tempfile.mkdtemp())
-        self.gen_ttf(prev=True)
-        self.cli_process.waitForFinished()
-        for fn in os.listdir(self.font_info.prev_dir):
-            fnt_path_py = os.path.join(self.font_info.prev_dir, fn)
-            fnt_path_qt = QDir.cleanPath(fnt_path_py)
-            self.font_indices.append(self.fontdb.addApplicationFont(fnt_path_qt))
-
-        self.prev_orig_reg.setText(prev_text)
-        self.prev_orig_reg.setFont(QFont('rf-orig'))
-        self.prev_orig_ita.setText(prev_text_ita)
-        self.prev_orig_ita.setFont(QFont('rf-orig'))
-        self.prev_reg.setText(prev_text)
-        self.prev_reg.setFont(QFont('rf-prev'))
-        self.prev_ita.setText(prev_text_ita)
-        self.prev_ita.setFont(QFont('rf-prev'))
-
-    def gen_ttf(self, prev=False):
+    def gen_ttf(self):
         """
         Generate modified TrueType font files, by calling the CLI script with the appropriate arguments.
         :param prev:
@@ -456,22 +384,21 @@ class RF_Qt(QMainWindow):
         if not self.ff_path:
             self.set_ff_path()
         if self.ff_path:
-            if not prev:
-                if not self.font_info.out_dir:
-                    save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select save directory...',
-                                                                                 options=QFileDialog.ShowDirsOnly))
-                    if save_dir == '.' or save_dir == '':
-                        return
-                    else:
-                        self.font_info.out_dir = save_dir
+            if not self.font_info.out_dir:
+                save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select save directory...',
+                                                                             options=QFileDialog.ShowDirsOnly))
+                if save_dir == '.' or save_dir == '':
+                    return
                 else:
-                    save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select Save directory...',
-                                                                                 self.font_info.out_dir,
-                                                                                 options=QFileDialog.ShowDirsOnly))
-                    if save_dir == '.' or save_dir == '':
-                        return
-                    else:
-                        self.font_info.out_dir = save_dir
+                    self.font_info.out_dir = save_dir
+            else:
+                save_dir = os.path.normpath(QFileDialog.getExistingDirectory(self, 'Select Save directory...',
+                                                                             self.font_info.out_dir,
+                                                                             options=QFileDialog.ShowDirsOnly))
+                if save_dir == '.' or save_dir == '':
+                    return
+                else:
+                    self.font_info.out_dir = save_dir
 
             for file, style in zip(self.font_files, self.fnt_sty_combo_list):
                 if style.currentIndex() == SEL_REGULAR:
@@ -483,10 +410,6 @@ class RF_Qt(QMainWindow):
                 elif style.currentIndex() == SEL_ITALIC:
                     self.font_info.font_file_it = file
 
-            if not prev:
-                self.font_info.prev_dir = ''
-                self.font_info.prev_font = ''
-
             cli_opt_list = self.font_info.gen_cli_command()
             self.cli_process.start(self.ff_path, cli_opt_list)
 
@@ -496,7 +419,6 @@ class RF_Qt(QMainWindow):
         :param event:
         :return:
         """
-        shutil.rmtree(self.font_info.prev_dir, ignore_errors=True)
         self.cli_process.close()
         event.accept()
 

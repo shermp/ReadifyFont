@@ -19,8 +19,6 @@ class FontInfo():
         self.add_weight = 0
         self.mod_bearings = False
         self.out_dir = ''
-        self.prev_font = ''
-        self.prev_dir = ''
 
     def gen_cli_command(self):
         """
@@ -62,13 +60,6 @@ class FontInfo():
             cli_command.append('-d')
             cli_command.append(os.path.normpath(self.out_dir))
 
-        if self.prev_font:
-            cli_command.append('-P')
-            cli_command.append(self.prev_font)
-        if self.prev_dir:
-            cli_command.append('-D')
-            cli_command.append(os.path.normpath(self.prev_dir))
-
         cli_command.append(self.font_name)
 
         return cli_command
@@ -86,5 +77,3 @@ class FontInfo():
         self.add_weight = 0
         self.mod_bearings = False
         self.out_dir = ''
-        self.prev_font = ''
-        self.prev_dir = ''
