@@ -23,6 +23,12 @@ FNT_BOLD = "Bold"
 FNT_BOLD_ITALIC = "BoldItalic"
 OPT_CHANGE_HINT = ("keep", "auto", "remove")
 
+def pyString(uStr):
+    if PYTHON_TWO:
+        return str(uStr)
+    else:
+        return uStr
+
 def tEnc(unicodeString):
     """
     Many FontForge methods will not except unicode... except when they do, and are required.
@@ -137,25 +143,14 @@ def getCodePointList(prevText):
         ordList.append(ord(c))
     return ordList
 
-def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, modBearings,
-            nameHack):
-    # Open font file and immediately save as a fontforge file
-    f = fontforge.open(fontFile.strip())
-    newFontFile = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".sfd")
-    newFontTTF = os.path.normpath(outDir+"/"+newFamilyName+"-"+style+".ttf")
-
-    f.save(newFontFile)
-    f.close()
-
-    # Open new fontforge file
-    f = fontforge.open(newFontFile)
-
+def modFont(f, newFontFile, newFontTTF, style, newFamilyName, changeHints, legacyKern, addWeight, stripPanose, panoseFix, modBearings, nameHack):
     # Set the font names in the SFNT names table
     setNames(f, newFamilyName, style)
-
     # Replace PANOSE Data with "Any", or 0
     if stripPanose:
         f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
+
+
 
     # Iterate over all glyphs in font, and darken regular and italic fonts only
     allGlyphs=f.glyphs()
@@ -197,6 +192,33 @@ def modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, add
         f.generate(newFontTTF, flags=flagsTTF)
         f.close()
 
+def ConvertSmallcaps(f):
+    subTableSC = "'smcp' Lowercase to Small Capitals in Latin lookup 5 subtable"
+    scGlyphs = []
+    for g in f.glyphs():
+        gName = g.glyphname
+        if g.getPosSub(subTableSC):
+            scName = gName + ".sc"
+            try:
+                scGlyphs.append((gName, scName))
+                f.selection.select(pyString(scName))
+                f.copy()
+                f.selection.select(pyString(gName))
+                f.paste()
+            except ValueError as e:
+                pass
+        else:
+            scGlyphs.append((gName, None))
+    return scGlyphs
+
+def removeGlyphs(f, scGlyphs):
+    for gN, scN in scGlyphs:
+        if scN:
+            try:
+                f.removeGlyph(-1, scN)
+            except ValueError as e:
+                pass
+
 def main():
     """
     The main function of the script that modifies fonts according to user options
@@ -214,11 +236,13 @@ def main():
     parser.add_argument("-d", "--outputdirectory" , help="Output directory if set. Default is \"./readified/\"")
     parser.add_argument("-w", "--addweight" , help="Add weight to font. Values around 8-15 seems suitable. 50 is bold", type=int)
     parser.add_argument("-p", "--panosestrip" , help="Strip PANOSE data from font", action="store_true")
+    parser.add_argument("-P", "--panosefix", help="Attempt to fix PANOSE data for the font", action="store_true")
     parser.add_argument("-m", "--modifybearings" , help="Modify bearings when adding weight. This has no affect when not adding weight. \
                         Only use it for subtle weight changes", action="store_true")
     parser.add_argument("-n", "--namehack" , help="If the fonts generated have internal names different to what you specified, \
                         try this option to enable an ugly workaround. It basically generates the font twice.", action="store_true")
-
+    parser.add_argument("-s", "--smallextract", help="If the font contains small-caps, extract them to a separate smallcaps font file",
+                        action="store_true")
     args = parser.parse_args()
 
     if not any((args.regular, args.italic, args.bold, args.bolditalic)):
@@ -235,7 +259,6 @@ def main():
         outDir = "./readified/"
 
     outDir = os.path.normpath(outDir)
-    print(outDir)
     try:
         os.makedirs(outDir)
     except OSError:
@@ -256,12 +279,38 @@ def main():
 
     legacyKern = args.legacykern
     addWeight = args.addweight
+    smallcapsExtract = args.smallextract
+    nameHack = args.namehack
 
     for style, fontFile in iterDic(fontDic, PYTHON_TWO):
         # Check if a font has been added before proceeding
         if fontFile:
-            modFont(fontFile, style, outDir, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
-                    args.modifybearings, args.namehack)
+            f = fontforge.open(fontFile.strip())
+            newFontFile = os.path.normpath(outDir + "/" + newFamilyName + "-" + style + ".sfd")
+            newFontTTF = os.path.normpath(outDir + "/" + newFamilyName + "-" + style + ".ttf")
+            f.save(newFontFile)
+            f.close()
+            f = fontforge.open(newFontFile)
+            modFont(f, newFontFile, newFontTTF, style, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
+                    args.panosefix, args.modifybearings, nameHack)
+
+            if smallcapsExtract:
+                f = fontforge.open(fontFile.strip())
+                scFamilyName = "SC" + newFamilyName
+                scFontFile = os.path.normpath(outDir + "/" + scFamilyName + "-" + style + ".sfd")
+                scFontTTF = os.path.normpath(outDir + "/" + scFamilyName + "-" + style + ".ttf")
+                f.save(scFontFile)
+                f.close()
+                f = fontforge.open(scFontFile)
+                scGlyphs = ConvertSmallcaps(f)
+                removeGlyphs(f, scGlyphs)
+                tabLiga = "'liga' Standard Ligatures in Latin lookup 6"
+                tabSC = "'smcp' Lowercase to Small Capitals in Latin lookup 5"
+                f.removeLookup(tabLiga)
+                f.removeLookup(tabSC)
+                modFont(f, scFontFile, scFontTTF, style, newFamilyName, changeHints, legacyKern, addWeight,
+                        args.panosestrip, args.panosefix,
+                        args.modifybearings, nameHack)
 
 if __name__ == "__main__":
     main()
