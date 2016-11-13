@@ -16,6 +16,7 @@ class FontInfo():
         self.leg_kern = False
         self.strip_panose = False
         self.name_hack = False
+        self.extract_sc = False
         self.add_weight = 0
         self.mod_bearings = False
         self.out_dir = ''
@@ -45,6 +46,8 @@ class FontInfo():
             cli_command.append('-p')
         if self.name_hack:
             cli_command.append('-n')
+        if self.extract_sc:
+            cli_command.append('-s')
 
         if self.change_hint in ('keep', 'remove', 'auto'):
             cli_command.append('-c')
@@ -74,6 +77,7 @@ class FontInfo():
         self.leg_kern = False
         self.strip_panose = False
         self.name_hack = False
+        self.extract_sc = False
         self.add_weight = 0
         self.mod_bearings = False
         self.out_dir = ''

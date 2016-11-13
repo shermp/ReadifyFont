@@ -110,7 +110,7 @@ class RF_Qt(QMainWindow):
         # Options #
         hb_options = QHBoxLayout()
 
-        ## Kerning, Panose, Alt. Name ##
+        ## Kerning, Panose, Alt. Name, SC ##
         gb_basic_opt = QGroupBox('Basic Options')
         gb_basic_opt.setStyleSheet(gb_style)
         hb_basic_opt = QHBoxLayout()
@@ -120,11 +120,13 @@ class RF_Qt(QMainWindow):
                           '<qt/>Kobo readers can get confused by PANOSE settings. This option sets all '
                                         'PANOSE information to 0, or \'any\'',
                           '<qt/>Some fonts have issues with renaming. If the generated font does not have '
-                                        'the same internal font name as you entered, try enabling this option.')
+                                        'the same internal font name as you entered, try enabling this option.',
+                          '<qt/>If the font contains small capital glyphs, attempt to create a small cap font from them.')
 
-        for opt, tip in zip(('Legacy Kerning', 'Clear PANOSE', 'Alt. Name'), basic_tooltips):
+        for opt, tip in zip(('Legacy Kerning', 'Clear PANOSE', 'Alt. Name', 'Extract Small Caps'), basic_tooltips):
             self.basic_opt_list.append(QCheckBox(opt))
             self.basic_opt_list[-1].setToolTip(tip)
+            self.basic_opt_list[-1].toggled.connect(self.set_basic_opt)
             hb_basic_opt.addWidget(self.basic_opt_list[-1])
 
         gb_basic_opt.setLayout(hb_basic_opt)
@@ -262,6 +264,8 @@ class RF_Qt(QMainWindow):
                 self.font_info.strip_panose = True
             if 'alt' in opt.text().lower():
                 self.font_info.name_hack = True
+            if 'caps' in opt.text().lower():
+                self.font_info.extract_sc = True
         else:
             if 'kerning' in opt.text().lower():
                 self.font_info.leg_kern = False
@@ -269,6 +273,8 @@ class RF_Qt(QMainWindow):
                 self.font_info.strip_panose = False
             if 'alt' in opt.text().lower():
                 self.font_info.name_hack = False
+            if 'caps' in opt.text().lower():
+                self.font_info.extract_sc = False
 
     def set_family_name(self, name):
         """

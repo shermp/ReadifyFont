@@ -150,8 +150,6 @@ def modFont(f, newFontFile, newFontTTF, style, newFamilyName, changeHints, legac
     if stripPanose:
         f.os2_panose = (0,0,0,0,0,0,0,0,0,0)
 
-
-
     # Iterate over all glyphs in font, and darken regular and italic fonts only
     allGlyphs=f.glyphs()
     for glyph in allGlyphs:
@@ -193,22 +191,24 @@ def modFont(f, newFontFile, newFontTTF, style, newFamilyName, changeHints, legac
         f.close()
 
 def ConvertSmallcaps(f):
-    subTableSC = "'smcp' Lowercase to Small Capitals in Latin lookup 5 subtable"
     scGlyphs = []
+
     for g in f.glyphs():
+        scG = False
         gName = g.glyphname
-        if g.getPosSub(subTableSC):
-            scName = gName + ".sc"
-            try:
-                scGlyphs.append((gName, scName))
-                f.selection.select(pyString(scName))
+        for st in g.getPosSub("*"):
+            if 'smcp' in st[0]:
+                scG = True
+                scGlyphs.append((gName, st[2]))
+                f.selection.select(pyString(st[2]))
                 f.copy()
                 f.selection.select(pyString(gName))
                 f.paste()
-            except ValueError as e:
-                pass
-        else:
-            scGlyphs.append((gName, None))
+
+                for sc_st in f[st[2].getPosSub("*")]:
+                    if 'kern' in sc_st[0]:
+                        pass
+
     return scGlyphs
 
 def removeGlyphs(f, scGlyphs):
