@@ -7,11 +7,10 @@
 # It has plenty of rough edges...
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-import os
-import sys
 import argparse
 from helper import *
 import fontforge
+from fontTools.ttLib import TTFont
 
 if sys.version_info.major == 2:
     PYTHON_TWO = True
@@ -111,30 +110,31 @@ def generateFlags(stripHints, legacyKern):
         flags = (tEnc("opentype"), tEnc("round"))
     return flags
 
-    
-
-def setNames(font, family, subfamily):
+def setNames(font, family, subFamily):
     """
     Set font names, both PostScript and TrueType (SFNT names table)
     :param font:
     :param family:
-    :param subfamily:
+    :param subfam:
     :return:
     """
     # PostScript font names
-    fontName = family.replace(" ", "")+"-"+subfamily
-    fullName = family + " " + subfamily
+    fontName = family.replace(" ", "")+"-" + subFamily
+    fullName = family + " " + subFamily
     # Set PS names
     font.fontname = fontName
     font.familyname = family
     font.fullname = fullName
+    if subFamily == FNT_BOLD_ITALIC:
+        subFam = "Bold Italic"
+    else:
+        subFam = subFamily
     # Set SFNT names
     font.appendSFNTName(tEnc("English (US)"), tEnc("Family"), family)
-    if subfamily == FNT_BOLD_ITALIC:
-        font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), "Bold Italic")
-    else:
-        font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), subfamily)
-        font.appendSFNTName(tEnc("English (US)"), tEnc("Fullname"), fullName)
+    font.appendSFNTName(tEnc("English (US)"), tEnc("Preferred Family"), family)
+    font.appendSFNTName(tEnc("English (US)"), tEnc("SubFamily"), subFam)
+    font.appendSFNTName(tEnc("English (US)"), tEnc("Preferred Styles"), subFam)
+    font.appendSFNTName(tEnc("English (US)"), tEnc("Fullname"), fullName)
 
 def getCodePointList(prevText):
     charList = list(set(prevText))
@@ -219,6 +219,27 @@ def removeGlyphs(f, scGlyphs):
             except ValueError as e:
                 pass
 
+def setOS2(newFontTTF, style):
+    os2FsSelValues = {FNT_REGULAR : 0x0040, # bit 6 set
+                      FNT_ITALIC : 0x0001, # bit 0 set
+                      FNT_BOLD : 0x0020, # bit 5 set
+                      FNT_BOLD_ITALIC : 0x0021} # bits 0 & 5 set
+
+    os2usWeightClassVals = {FNT_REGULAR : 400,
+                      FNT_ITALIC : 400,
+                      FNT_BOLD : 700,
+                      FNT_BOLD_ITALIC : 700}
+
+    macStyleValues = {FNT_REGULAR : 0x0000, # all bits cleared
+                      FNT_ITALIC : 0x0002, # bit 1 set
+                      FNT_BOLD : 0x0001, # bit 0 set
+                      FNT_BOLD_ITALIC : 0x0003} # bits 0 & 1 set
+    tt = TTFont(newFontTTF)
+    tt['OS/2'].fsSelection = os2FsSelValues[style]
+    tt['OS/2'].usWeightClass = os2usWeightClassVals[style]
+    tt['head'].macStyle = macStyleValues[style]
+    tt.save(newFontTTF)
+
 def main():
     """
     The main function of the script that modifies fonts according to user options
@@ -293,6 +314,7 @@ def main():
             f = fontforge.open(newFontFile)
             modFont(f, newFontFile, newFontTTF, style, newFamilyName, changeHints, legacyKern, addWeight, args.panosestrip,
                     args.panosefix, args.modifybearings, nameHack)
+            setOS2(newFontTTF, style)
 
             if smallcapsExtract:
                 f = fontforge.open(fontFile.strip())

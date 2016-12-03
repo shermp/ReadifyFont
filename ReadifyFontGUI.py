@@ -113,7 +113,7 @@ class RF_Qt(QMainWindow):
         ## Kerning, Panose, Alt. Name, SC ##
         gb_basic_opt = QGroupBox('Basic Options')
         gb_basic_opt.setStyleSheet(gb_style)
-        hb_basic_opt = QHBoxLayout()
+        vb_basic_opt = QVBoxLayout()
         self.basic_opt_list = []
         basic_tooltips = ('<qt/>Some readers and software require \'legacy\', or \'old style\' kerning to be '
                                       'present for kerning to work.',
@@ -127,15 +127,15 @@ class RF_Qt(QMainWindow):
             self.basic_opt_list.append(QCheckBox(opt))
             self.basic_opt_list[-1].setToolTip(tip)
             self.basic_opt_list[-1].toggled.connect(self.set_basic_opt)
-            hb_basic_opt.addWidget(self.basic_opt_list[-1])
+            vb_basic_opt.addWidget(self.basic_opt_list[-1])
 
-        gb_basic_opt.setLayout(hb_basic_opt)
+        gb_basic_opt.setLayout(vb_basic_opt)
         hb_options.addWidget(gb_basic_opt)
 
         ## Hinting ##
         gb_hint_opt = QGroupBox('Hinting Option')
         gb_hint_opt.setStyleSheet(gb_style)
-        hb_hint_opt = QHBoxLayout()
+        vb_hint_opt = QVBoxLayout()
         self.hint_opt_list = []
         hint_tooltips = ('<qt/>Keep font hinting as it exists in the orginal font files.<br />'
                          'In most cases, this will look fine on most ebook reading devices.',
@@ -148,10 +148,10 @@ class RF_Qt(QMainWindow):
             self.hint_opt_list.append(QRadioButton(opt))
             self.hint_opt_list[-1].setToolTip(tip)
             self.hint_opt_list[-1].toggled.connect(self.set_hint)
-            hb_hint_opt.addWidget(self.hint_opt_list[-1])
+            vb_hint_opt.addWidget(self.hint_opt_list[-1])
 
         self.hint_opt_list[0].setChecked(Qt.Checked)
-        gb_hint_opt.setLayout(hb_hint_opt)
+        gb_hint_opt.setLayout(vb_hint_opt)
         hb_options.addWidget(gb_hint_opt)
 
         win_layout.addLayout(hb_options)
@@ -439,7 +439,8 @@ class RF_Qt(QMainWindow):
 
             cli_opt_list = self.font_info.gen_cli_command()
             self.cli_process.start(self.ff_path, cli_opt_list)
-            self.result_dia.exec()
+            self.result_dia.setModal(True)
+            self.result_dia.show()
 
     def closeEvent(self, event):
         """
